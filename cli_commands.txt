@@ -1,0 +1,571 @@
+aaa authentication captive-portal <profile>  
+    apple-cna-bypass        
+    auth-protocol <prot>
+    black-list <black-list>
+    clone <source-profile> 
+    default-guest-role <role>
+    default-role <role> 
+    enable-welcome-page 
+    guest-logon 
+    ip-addr-in-redirection <ipaddr>
+    login-page <url> 
+    logon-wait { cpu-threshold <percent> | maximum-delay <seconds> | minimum-delay <seconds> } 
+    logout-popup-window 
+    max-authentication-failures <number> 
+    protocol-http 
+    redirect-pause <seconds> 
+    redirect-url <url>
+    server-group <group-name> 
+    show-acceptable-use-policy
+    show-fqdn 
+    single-session
+    switchip-in-redirection-url <ipaddr>
+    url-hash-key <key>
+    user-idle-timeout
+    user-logon 
+    user-vlan-in-redirection-url <vlan>
+    welcome-page <url>
+    white-list <white-list> 
+!
+aaa authentication dot1x <profile>
+    ca-cert <certificate> 
+    cert-cn-lookup
+    clear
+    clone <profile>
+    delete-keycache 
+    eapol-logoff 
+    enforce-suite-b-128
+    enforce-suite-b-192
+    framed-mtu <mtu> 
+    heldstate-bypass-counter <number> 
+    ignore-eap-id-match 
+    ignore-eapolstart-afterauthentication 
+    machine-authentication { blacklist-on-failure | cache-timeout <hours> | enable | machine-default-role <role> | user-default-role <role> } 
+    max-authentication-failures <number> 
+    max-requests <number> 
+    multicast-keyrotation 
+    opp-key-caching 
+    reauth-max <number> 
+    reauth-server-termination-action 
+    reauthentication 
+    server { server-retry <number> | server-retry-period <seconds> } 
+    server-cert <certificate> 
+    termination { eap-type <type> | enable | enable-token-caching | inner-eap-type { eap-gtc | eap-mschapv2 } | token-caching-period <hours> } 
+    timer { idrequest_period <seconds> | keycache-tmout <kc-tmout> | mkey-rotation-period <seconds> | quiet-period  <seconds> | reauth-period <seconds> | ukey-rotation-period <seconds> | wpa-groupkey-delay <seconds> | wpa-key-period <milliseconds> | wpa2-key-delay <milliseconds> }
+    tls-guest-access 
+    tls-guest-role <role> 
+    unicast-keyrotation 
+    use-session-key 
+    use-static-key 
+    validate-pmkid
+    voice-aware 
+    wep-key-retries <number> 
+    wep-key-size <size>
+    wpa-fast-handover 
+    wpa-key-retries <number> 
+    xSec-mtu <mtu>
+!
+aaa authentication mac <profile>
+    case <case>
+    clone <profile> 
+    delimiter <delimiter>
+    max-authentication-failures <number> 
+    reauthentication
+    timer reauth period <reauth>
+!
+aaa authentication-server radius <rad_server_name>
+    acctport <port> 
+    authport <port> 
+    called-station-id type { ap-group | ap-macaddr | ap-name | ipaddr | macaddr | vlan-id } [ delimiter { colon | dash | none } ] [ include-ssid { enable | disable } ]
+    clone <server> 
+    cppm username <username> password <password>
+    enable
+    enable-ipv6
+    enable-radsec
+    host <ipaddr | FQDN> 
+    key <psk> 
+    mac-delimiter [ colon | dash | none | oui-nic ]
+    mac-lowercase
+    nas-identifier <string> 
+    nas-ip <ipaddr> 
+    nas-ip6 <ipv6-adrress>
+    radsec-client-cert-name <name>
+    radsec-port <radsec-port>
+    radsec-trusted-cacert-name <radsec-trusted-ca>
+    radsec-trusted-servercert-name <name>
+    retransmit <number> 
+    service-type-framed-user
+    source-interface vlan <vlan> ip6addr <ipv6addr>
+    timeout <seconds> 
+    use-ip-for-calling-station
+    use-md5
+!
+aaa profile <profile>
+    authentication-dot1x <dot1x-profile> 
+    authentication-mac <mac-profile> 
+    clone <profile> 
+    devtype-classification
+    dot1x-default-role <role> 
+    dot1x-server-group <group> 
+    download-role
+    enforce-dhcp
+    initial-role <role> 
+    l2-auth-fail-through
+    mac-default-role <role> 
+    mac-server-group <group>
+    max-ip ipv4 wireless <max_ipv4_users>
+    multiple-server-accounting
+    open ssid radius accounting
+    pan-integration
+    radius-accounting <group> 
+    radius-interim-accounting
+    rfc-3576-server <ipaddr> 
+    sip-authentication-role <role> 
+    user-derivation-rules <profile> 
+    user-idle-timeout
+    wired-to-wireless-roam 
+    xml-api-server <ipaddr>
+!
+aaa rfc-3576-server <ipaddr>
+    clone <source> 
+    key <psk> 
+!
+aaa server-group <group>
+    allow-fail-through
+    auth-server <name> [ match-authstring contains | equals | starts-with <string> ] [ match-fqdn <string> ] [ position <number> ] [ trim-fqdn ] 
+    clone <group> 
+    load-balance 
+    set { role | vlan condition } <attribute> { contains | ends-with | equals
+| not-equals | starts-with } <string> set-value <set-value-str> [ position <number> ]
+!
+ap regulatory-domain-profile <profile>
+    clone <profile> 
+    country-code <code> 
+    valid-11a-40mhz-channel-pair <valid-11a-40mhz-channel-pair>
+    valid-11a-80mhz-channel-group <valid-11a-80mhz-channel-group>
+    valid-11a-channel <num>
+    valid-11g-40mhz-channel-pair <valid-11g-40mhz-channel-pair>
+    valid-11g-channel <num>
+!
+ap system-profile <profile>
+    aeroscout-rtls-server ip-or-dns <ipaddr-or-dns> port <port> include-unassoc-sta <include>
+    am-scan-rf-band <scanning>
+    ap-arp-attack-protection
+    ap-usb-power-override
+    bkup-band <band>
+    bkup-lms-ip <ipaddr> 
+    bkup-lms-ipv6 <ipaddr>
+    bkup-mode <mode>
+    bkup-password <password>
+    ble-op-mode <mode>
+    ble-token <string>
+    ble-url <url>
+    lms-ping-interval
+    bootstrap-threshold <number> 
+    clone <profile> 
+    dns-domain <domain>
+    double-encrypt 
+    dump-server <server> 
+    gre-striping-ip
+    heartbeat-dscp <number>
+    heartbeat-in <secs>
+    led-mode normal | off
+    lms-hold-down-period <seconds>
+    lms-ip <ipaddr> 
+    lms-ipv6 <ipaddr>
+    lms-preemption
+    maintenance-mode
+    max-request-retries <number> 
+    mcast-aggr
+    mcast-aggr-allowed-vlan <vlan-list>
+    mtu <bytes> 
+    native-vlan-id <vlan> 
+    number_ipsec_retries
+    rap-bw-total
+    rap-bw-resv-1
+    rap-bw-resv-2
+    rap-bw-resv-3
+    rap-dhcp-default-router <ipaddr>
+    rap-dhcp-dns-server <ipaddr>
+    rap-dhcp-lease <days>
+    rap-dhcp-pool-end <ipaddr>
+    rap-dhcp-pool-netmask <netmask>
+    rap-dhcp-pool-start <ipaddr>
+    rap-dhcp-server-id <ipaddr>
+    rap-dhcp-server-vlan <vlan>
+    rap-gre-mtu
+    rap-local-network-access
+    request-retry-interval <seconds> 
+    rf-band <band> 
+    rtls-server ip-or-dns <ipaddr-ordns> port <port> key <key> station-message-frequency <seconds> include-unassoc-sta
+    session-acl <acl>
+    shell-passwd <password>
+    spanning-tree           
+    syscontact <name> 
+    telnet
+!
+ap-group <group>
+    ap-system-profile <profile> 
+    authorization-profile <profile>
+    clone <profile> 
+    dot11a-radio-profile <profile> 
+    dot11a-traffic-mgmt-profile <profile> 
+    dot11g-radio-profile <profile> 
+    dot11g-traffic-mgmt-profile <profile> 
+    enet0-port-profile <profile> 
+    enet1-port-profile <profile> 
+    enet2-port-profile <profile>
+    enet3-port-profile <profile>
+    enet4-port-profile <profile>
+    event-thresholds-profile <profile> 
+    ids-profile <profile> 
+    mesh-cluster-profile <profile> priority <priority>
+    mesh-radio-profile <profile>
+    regulatory-domain-profile <profile> 
+    rf-optimization-profile <profile> 
+    virtual-ap <profile> 
+    voip-cac-profile <profile> 
+!
+interface { fastethernet | gigabitethernet } <slot>/<module>/<port>
+    bandwidth-contract <name> | { { app <app-name> | appcategory <app-category-name> } <bw-contract-name> } upstream | downstream [ exclude ]
+    description <string> 
+    duplex <duplex>
+    ip access-group <name> { in | out | session vlan <vlanId> } 
+    jumbo
+    lacp <lacp>
+    lldp { fast-transmit-counter <1-8> | fast-transmit-interval <1-3600> | med | receive | transmit | transmit-hold <1-100> | transmit-interval <1-3600> }
+    port monitor { fastethernet | gigabitethernet } <slot>/<port> 
+    priority-map <name> 
+    shutdown 
+    spanning-tree { [ bpduguard ] | [ cost <value> ] | [ point-to-point ] | [ port-priority <value> ] | [ portfast ] [ vlan ] } 
+    speed <speed>
+    switchport { access vlan <vlan> | mode { access | trunk } | trunk { allowed vlan { <vlans> | add <vlans> | all | except <vlans> | remove <vlans> } | native vlan <vlan> } }
+    trusted vlan <word>
+    tunneled-node-port
+    xsec { point-to-point <macaddr> <key> allowed vlan <vlans> [ <mtu> ] | vlan <vlan> }
+!
+interface loopback
+    ip address <ipaddr> 
+    ipv6 address <ipv6-prefix>
+!
+interface vlan <vlan>
+    bandwidth-contract <name>
+    bcmc-optimization
+    description <string>
+    ip { access-group <name> in } | { address <ipaddr> | dhcp-client client-id <cid> | internal | pppoe } | helper-address <address> | igmp [ proxy ][ snooping ] | local-proxy-arp | nat[ inside ] | { ospf { area <area> | authentication <auth> | cost <cost> | dead-interval <dead> | hello-interval <hello> | message-digest-key <key> | priority <prio> | retransmit-interval <interval> | transmit-delay <delay> } | pppoe-max-segment-size <mss> | pppoe-password <password> | pppoe-service-name <service-name> | pppoe-username <username> | routing }
+    ipv6 { address <ipv6-address> link-local | [ <ipv6-prefix>/<prefix-length> | eui-64 ] } | { dhcp server <pool name> } | { mld snooping | proxy { fastethernet | gigabitethernet | port-channel } <slot>/<port> } | nd { ra [ dns | enable | hop-limit | interval | life-time | managed-config-flag | mtu | other-config-flag | preference | prefix ] | reachable-time <value> | retransmit-time <value> } }
+    mtu <number>
+    multimode-auth { lease-time }
+    operstate { up }
+    option-82 { ap-name essid } | { mac [ essid ] }
+    shutdown
+    suppress-arp
+!
+ip dhcp pool <name>
+    default-router <ipaddr> 
+    dns-server <ipaddr>
+    domain-name <name>
+    lease <days> <hours> <minutes>
+    netbios-name-server { <ipaddr> | import }
+    network <ipaddr> <netmask> 
+    option <code> ip <ipaddr>
+    pooltype ipupsell | private | public
+    vendor-class-identifier
+!
+ip name-server <ipaddr>
+    master-redundancy peer-ip <ipaddr> 
+    ipsec <key> 
+    ipsec-custom-cert master-mac <mac> ca-cert <ca> server-cert <cert> [ suite‑b gcm-128 | gcm-256 ]
+    ipsec-factory-cert master-mac <mac>
+!
+master-redundancy master-vrrp <id> 
+    masterip <ipaddr> 
+    ipsec <key> [ interface uplink | { vlan <id> } ] [ fqdn <fqdn> ]
+    ipsec-custom-cert master-mac1 <mac1> [ master-mac2 <mac2> ] ca-cert <ca> server-cert <cert> [ interface uplink | vlan <id> ] [ fqdn <fqdn> ] [ suite‑b gcm-128 | gcm-256 ]
+    ipsec-factory-cert master-mac1 <mac1> [ master-mac2 <mac2> ] [ interface uplink | { vlan <id> } ] [ fqdn <fqdn> ]
+!
+netdestination <name>
+    description <description6>
+    host <ipaddr> [ position <number> ] { vlan <vlanID> | offset <offset No> }
+    invert 
+    name <host_name>
+    network <ipaddr> <netmask> [ position <number> ] 
+    range <start-ipaddr> <end-ipaddr> [ position <number> ]
+!
+netservice <name> <protocol> | tcp | udp { list <input> } | { <port> [ <port> ] } [ ALG <service> ]
+!
+ntp server { <IPv4/IPv6 Address> | [ iburst ] [ key ] }
+!
+rf am-scan-profile <profile-name>
+    clone <profile>
+    dwell-time-active-channel
+    dwell-time-other-reg-domain-channel
+    dwell-time-rare-channel
+    dwell-time-reg-domain-channel
+    scan-mode 
+!
+rf dot11a-radio-profile <profile>
+    am-scan-profile <profile-name>
+    arm-profile <profile> 
+    beacon-period <milliseconds> 
+    beacon-regulate
+    cap-reg-eirp <cap-reg-eirp>
+    cell-size-reduction <cell-size-reduction>
+    channel <num>
+    channel-reuse <reuse>
+    channel-reuse-threshold
+    clone <profile> 
+    csa 
+    csa-count <number> 
+    disable-arm-wids-function
+    dot11h 
+    high-throughput-enable
+    ht-radio-profile <profile>
+    interference-immunity
+    maximum-distance <maximum-distance>
+    mgmt-frame-throttle-interval <seconds>
+    mgmt-frame-throttle-limit <number>
+    mode <mode>
+    radio-enable 
+    slb-mode channel | radio
+    slb-threshold
+    slb-update-interval <secs>
+    spectrum-load-bal-domain
+    spectrum-load-balancing
+    spectrum-monitoring
+    spectrum-profile <profile>
+    spur-immunity <spur-immunity>
+    tpc-power <tpc-power>
+    tx-power <dBm>
+    very-high-throughput-enable 
+!
+rf dot11g-radio-profile <profile>
+    am-scan-profile <profile-name>
+    arm-profile <profile> 
+    beacon-period <milliseconds> 
+    beacon-regulate
+    cap-reg-eirp <cap-reg-eirp>
+    cell-size-reduction <cell-size-reduction>
+    channel <num>
+    channel-reuse <reuse>
+    channel-reuse-threshold
+    clone <profile> 
+    csa 
+    csa-count <number> 
+    disable-arm-wids-function
+    dot11b-protection
+    dot11h
+    high-throughput-enable
+    ht-radio-profile <profile>
+    interference-immunity
+    maximum-distance <maximum-distance>
+    mgmt-frame-throttle-interval <seconds>
+    mgmt-frame-throttle-limit <number>
+    mode <mode>
+    radio-enable 
+    slb-mode <mode>
+    slb-threshold
+    slb-update-interval <secs>
+    spectrum-load-bal-domain
+    spectrum-load-balancing
+    spectrum-monitoring
+    spectrum-profile
+    tpc-power <tpc-power>
+    tx-power <dBm>
+    very-high-throughput-rates-enable
+!
+rf ht-radio-profile <profile>
+    40MHz-intolerance
+    clone <profile>
+    diversity-spreading-workaround
+    honor-40MHz-intolerance
+!
+snmp-server 
+    community <string>
+    enable trap
+    engine-id
+    host <IPv4/IPv6 Address> | version { 1 <name> udp-port <port> } | 2c | { 3 <name> } [ inform ] [ interval   <seconds> ] [ retrycount <number> ] [ udp-port <port> ] }
+    inform queue-length <size>
+    source controller-ip
+    stats
+    trap enable | disable | { source [ IPv4/IPv6 Address ] }
+    user <name> [ auth-prot { md5 | sha } <password> ] [ priv-prot { AES | DES } <password> ]
+!
+user-role <name>
+    access-list { eth | mac | session } <acl> [ ap-group <group> ] [ position <number> ]
+    bw-contract <name> [ per-user ] { downstream | upstream }
+    bw-contract { app | appcategory } { downstream | upstream } | exclude { app | appcategory }
+    bw-contract web-cc-category | web-cc-reputation <cc-name> <bwc-name> downstream | upstream
+    captive-portal { <STRING> | check-for-accounting }
+    dialer <name>
+    dpi
+    max-sessions <number>
+    policer-profile <profile>
+    pool { l2tp | pptp } <name>
+    qos-profile <profile>
+    reauthentication-interval [ <minutes> | <seconds> ]
+    registration-role
+    session-acl <string> [ ap-group <group> ] [ position <number> ]
+    sso <profile>
+    stateful-kerberos <profile>
+    stateful-ntlm <ntlm_profile_name>
+    traffic-control-profile <STRING>
+    via <profile>
+    vlan { <ID> | <name> }
+    voip-profile <profile>
+    web-cc disable
+    wispr <wispr_profile_name>
+!
+vlan <id> [ <description> ] | [ <name> <vlan-ids> ] | [ range <range> ] | [ wired aaa-profile <profile> ]
+!
+vlan-name <name> [ assignment { even | hash } ]
+!
+vrrp <id>
+    advertise <interval> 
+    authentication <password> 
+    description <text> 
+    holdtime <secs>
+    ip address <ipaddr> 
+    preempt 
+    priority <level> 
+    shutdown 
+    tracking interface { fastethernet <slot>/<port> | gigabitethernet <slot>/<port> } { sub <value> }
+    tracking master-up-time <duration> add <value> 
+    tracking vlan <vlanid> { sub <value> }
+    tracking vrrp-master-state <vrid> add <value> 
+    vlan <vlanid>
+!
+whitelist-db rap add mac-addr <mac-address>
+    ap-group <ap-group>
+    ap-name <ap-name>
+    description <description>
+    full-name <full-name>
+    mode enable | disable
+    remote-ip <ip-addr>
+!
+wlan ht-ssid-profile <profile-name>
+    40MHz-enable
+    80MHz-enable
+    ba-amsdu-enable
+    clone <profile-name> 
+    high-throughput-enable
+    ldpc
+    legacy-stations
+    max-rx-a-mpdu-size <size>
+    max-tx-a-mpdu-size <bytes>
+    max-tx-a-msdu-count-be <count>
+    max-tx-a-msdu-count-bk <count>
+    max-tx-a-msdu-count-vi <count>
+    max-tx-a-msdu-count-vo <count>
+    max-vht-mpdu-size
+    min-mpdu-start-spacing <space>
+    mpdu-agg
+    short-guard-intvl-20MHz
+    short-guard-intvl-40MHz
+    short-guard-intvl-80MHz
+    stbc-rx-streams
+    stbc-tx-streams
+    supported-mcs-set <mcs-list>
+    temporal-diversity
+    very-high-throughput-enable
+    vht-mu-txbf-enable
+    vht-supported-mcs-map
+    vht-txbf-explicit-enable
+    vht-txbf-sounding-interval
+!
+wlan ssid-profile <profile-name>
+    902il-compatibility-mode
+    a-basic-rates <mbps> 
+    a-beacon-rate
+    a-tx-rates <mbps> 
+    advertise-ap-name
+    advertise-location
+    ageout <seconds>
+    auth-req-thresh <auth-req-thresh>
+    battery-boost 
+    clone <profile-name> 
+    deny-bcast
+    disable-probe-retry 
+    dot11r-profile
+    dtim-period <milliseconds> 
+    eapol-rate-opt
+    edca-parameters-profile { ap | station } <profile-name>
+    enforce-user-vlan       
+    essid <name> 
+    g-basic-rates <mbps> 
+    g-beacon-rate
+    g-tx-rates <mbps> 
+    hide-ssid 
+    ht-ssid-profile <profile-name>
+    local-probe-req-thresh
+    max-clients <number> 
+    max-retries <number> 
+    max-tx-fail <number> 
+    mcast-rate-opt
+    mfp-capable
+    mfp-required
+    multicast-rate
+    okc
+    opmode <opmode>
+    qbss-load-enable
+    rts-threshold <number> 
+    short-preamble 
+    ssid-enable 
+    strict-svp 
+    wepkey1 <key> 
+    wepkey2 <key>
+    wepkey3 <key>
+    wepkey4 <key>
+    weptxkey <index> 
+    wmm 
+    wmm-be-dscp <best-effort>
+    wmm-bk-dscp <background>
+    wmm-override-dscp-mapping
+    wmm-ts-min-inact-int <milliseconds>
+    wmm-uapsd
+    wmm-vi-dscp <video>
+    wmm-vo-dscp <voice>
+    wpa-hexkey <psk> 
+    wpa-passphrase <string> 
+!
+wlan virtual-ap <profile-name>
+    aaa-profile <profile-name> 
+    allowed-band <band> 
+    anyspot-profile <profile>
+    auth-failure-blacklist-time <seconds>
+    band-steering
+    blacklist
+    blacklist-time <seconds>
+    broadcast-filter all | arp
+    cellular-handoff-assist
+    clone <profile-name>
+    deny-inter-user-traffic 
+    deny-time-range <range>
+    dos-prevention
+    dot11k-profile
+    dynamic-mcast-optimization
+    dynamic-mcast-optimization-threshold
+    fdb-update-on-assoc 
+    forward-mode <mode>
+    ha-disc-onassoc
+    hs2-profile
+    mobile-ip 
+    outer-vlan
+    preserve-vlan
+    rap-operation <rap-op>
+    ssid-profile <profile-name>
+    steering-mode <steering>
+    strict-compliance
+    vap-enable
+    vlan <vlan>
+    vlan-mobility
+    wan-operation
+    wmm-traffic-management-profile
+!
+localip <ipaddr> 
+    ipsec <key> 
+!
+local-userdb add { generate-username | username <name> } { generate-password | password <passwd> } [ comment <g_comments> ][ email <email> ] [ expiry { duration <minutes> | time <hh/mm/yyy> <hh:mm> } ] [ guest-company <g_company> ][ guest-fullname <g_fullname> ][ guest-phone <g-phone> ][ mode disable ][ opt-field-1 <opt1> ][ opt-field-2 <opt2> ][ opt-field-3 <opt3> ][ opt-field-4 <opt4> ][ [ remote-ip <ip-addr> ][ role <role> ][ sponsor-dept <sp_dept> ][ sponsor-mail <sp_email> ][ sponsor-fullname <sp_fullname> ][ sponsor-name <sp_name> ][ start-time <mm/dd/yyyy> <hh.mm> ]
+!
+local-userdb-guest add { generate-username | username <name> } { generate-password | password <passwd> } [ comment <g_comments> ][ email <email> ] [ expiry { duration <minutes> | time <hh/mm/yyy> <hh:mm> } ] [ guest-company <g_company> ][ guest-fullname <g_fullname> ][ guest-phone <g-phone> ][ mode disable ][ opt-field-1 <opt1> ][ opt-field-2 <opt2> ][ opt-field-3 <opt3> ][ opt-field-4 <opt4> ][ sponsor-dept <sp_dept> ][ sponsor-mail <sp_email> ][ sponsor-fullname <sp_fullname> ][ sponsor-name <sp_name> ][ start-time <mm/dd/yyyy> <hh.mm> ]
+!
