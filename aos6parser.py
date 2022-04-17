@@ -3,6 +3,7 @@ import re
 
 cli_to_api_dict = {'ip access-list session' : 'Session ACL',
                    'user-role' : 'Role',
+                   'aaa authentication-server radius' : 'Radius Server'
                    }
 object_values_dict = { 'user-role' : ['access-list eth|mac|session', 'bw-contract app|appcategory|exclude', 'bw-contract web-cc-category|web-cc-reputation', 'bw-contract', 'captive-portal', 'dialer', 'dpi', 'max-sessions', 'policer-profile', 'pool l2tp|pptp', 'qos-profile', 'reauthentication-interval', 'registration-role', 'session-acl', 'sso', 'stateful-kerberos', 'stateful-ntlm', 'traffic-control-profile', 'via', 'vlan', 'voip-profile', 'webcc disable', 'wispr'],
                        'snmp-server': ['community', 'enable trap', 'engine-id', 'host', 'inform queue-length', 'source controller-ip', 'stats', 'trap', 'user']}
@@ -173,25 +174,46 @@ def add_options(options, added_options):
 
 def process_line(line):
     current = 1
-    words = line.split(' ')
+    words = line.strip().split(' ')
     options = process_expression(words, current, words[0])
     return options[1]
 
+def create_expanded_cli_commands():
+    cli_commands_path = 'test_cli_commands.txt'
+    expanded_cli_commands = 'expanded_cli_commands.txt'
+    cli_lines = []
+    with open(cli_commands_path) as cli_file:
+        cli_lines = cli_file.readlines()
+    with open(expanded_cli_commands, 'w') as expanded_file:
+        indentation = '    '
+        for line in cli_lines:
+            if line == '!\n' or line == '!':
+                expanded_file.write(line)
+            else:
+                if ' ' != line[0]:
+                    indentation = ''
+                processed_line = process_line(line)
+                for new_line in processed_line:
+                    expanded_file.write(f'{indentation}{new_line}\n')
+
 def populate_objects_value_dict():
-    cli_commands_path = 'cli_commands.txt'
+    cli_commands_path = 'test_cli_commands.txt'
     with open(cli_commands_path) as cli_file:
         user_input = re.compile(r'<\w+>')
         lines = cli_file.readlines()
         current = 0
         while(current < len(lines)):
             if user_input.match(lines[current].split(' ')[-1]):
-                object_name = join_words(lines[current].split(' ')[:-1])
+                object_name = join_words(lines[current].strip().split(' ')[:-1], ' ')
                 object_values_dict[object_name] = []
                 current += 1
                 while(current < len(lines) and lines[current] != '!\n'):
-                    current_line = lines[current].lstrip()
+                    current_line = lines[current].strip()
                     if is_simple_parameter(current_line):
-                        command = join_words(current_line.split(' ')[:-1])
+                        keywords = current_line.split(' ')
+                        if len(keywords) > 1:
+                            keywords = keywords[:-1]
+                        command = join_words(keywords, ' ')
                         object_values_dict[object_name].append(command)
                     else:
                         if object_name in multi_value_parameter:
@@ -199,6 +221,7 @@ def populate_objects_value_dict():
                         else:
                             multi_value_parameter[object_name] = [current_line]
                     current += 1
+                current += 1
 
 def is_simple_parameter(line):
     words = line.split(' ')
