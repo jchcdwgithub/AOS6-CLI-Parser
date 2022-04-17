@@ -3,10 +3,32 @@ import re
 
 cli_to_api_dict = {'ip access-list session' : 'Session ACL',
                    'user-role' : 'Role',
-                   'aaa authentication-server radius' : 'Radius Server'
+                   'aaa authentication-server radius' : { 'aaa authentication-server radius' :'Radius Server Name',
+                                                          'acctport' : 'Rad Server Acctport',
+                                                          'authport' : 'Rad Server Authport',
+                                                          'use-md5' : 'Rad Server MD5',
+                                                          'enable-radsec' : 'Radsec',
+                                                          'radsec-client-cert-name' : 'Radsec Client Cert Name',
+                                                          'radsec-port' : 'Radsec Port',
+                                                          'radsec-trusted-cacert-name' : 'Radsec Trusted CA Cert Name',
+                                                          'radsec-trusted-servercert-name' : 'Radsec Trusted Server Cert Name',
+                                                          'retransmit' : 'Rad Server Retransmit',
+                                                          'service-type-framed-user' : 'Service Type Framed User',
+                                                          'timeout' : 'Rad Server Timeout',
+                                                          'use-ip-for-calling-station' : 'Use IP For Calling Station',
+                                                          'enable-ipv6' : 'Enable IPv6',
+                                                          'host' : 'Rad Server Host',
+                                                          'called-station-id type' : 'Called-station-ID Type',
+                                                          'called-station-id delimiter' : 'Called-station-ID Delimiter',
+                                                          'called-station-id include-ssid' : 'Called-station-ID Include SSID',
+                                                          'cppm username' : 'CPPM Username',
+                                                          'cppm password' : 'CPPM PW',
+                                                          'source-interface vlan' : 'Source Interface VLAN',
+                                                          'source-interface ip6addr' : 'Source Interface IPv6 Addr'
+                                                        }
+                   
                    }
-object_values_dict = { 'user-role' : ['access-list eth|mac|session', 'bw-contract app|appcategory|exclude', 'bw-contract web-cc-category|web-cc-reputation', 'bw-contract', 'captive-portal', 'dialer', 'dpi', 'max-sessions', 'policer-profile', 'pool l2tp|pptp', 'qos-profile', 'reauthentication-interval', 'registration-role', 'session-acl', 'sso', 'stateful-kerberos', 'stateful-ntlm', 'traffic-control-profile', 'via', 'vlan', 'voip-profile', 'webcc disable', 'wispr'],
-                       'snmp-server': ['community', 'enable trap', 'engine-id', 'host', 'inform queue-length', 'source controller-ip', 'stats', 'trap', 'user']}
+object_values_dict = {}                    
 one_line_objects_dict = {}
 multi_value_parameter = {}
 
@@ -35,12 +57,81 @@ def parse():
         print('file does not exist.')
         exit()
 
+def gather_objects(lines):
+    
+    current = 0
+    objects = {}
+    while current < len(lines):
+        current_line = lines[current]
+        current_object = [current_line]
+        current_object_name = get_object_name_from_line(current_line)
+        current += 1
+        while lines[current].strip() != '!':
+            current_object.append(lines[current])
+            current += 1
+            if current == len(lines):
+                break
+        if current_object_name in objects:
+            objects[current_object_name].append(current_object)
+        else:
+            objects[current_object_name] = [current_object]
+        current += 1
+    return objects
+
+def process_objects(objects):
+
+    objects_attributes = {} 
+    for object_name in objects:
+        object_list = objects[object_name]
+        object_attributes = []
+        for object in object_list:
+            object_attributes.append(group_object_attributes(object))
+        objects_attributes[object_name] = object_attributes
+    return objects_attributes 
+
+def build_attributes_arrays(objects_attributes):
+
+    attributes_arrays = []
+    for objects in objects_attributes:
+        attributes_object = add_keys_to_attributes_object(objects_attributes[objects]) 
+        for object_attributes in objects_attributes[objects]:
+            for attribute in object_attributes:
+                processed_attribute_list = process_attribute_list(object_attributes[attribute])
+                attributes_object[attribute].append(processed_attribute_list)
+            for attribute in attributes_object:
+                if not attribute in object_attributes:
+                    attributes_object[attribute].append('')
+        attributes_arrays.append(attributes_object)
+    return attributes_arrays
+            
+def add_keys_to_attributes_object(objects):
+    attributes_object = {}
+    for object in objects:
+        for key in object:
+            if not key in attributes_object:
+                attributes_object[key] = []
+    return attributes_object
+
+def process_attribute_list(list):
+
+    processed_list = list[0]
+    for word in list[1:]:
+        processed_list += f' ,{word}'
+    return processed_list
+
+def get_object_name_from_line(object):
+    words = object.strip().split(' ')
+    return join_words(words[:-1], ' ') 
+
 def group_object_attributes(object):
     groups = {}
-    name_line = object[0].split(' ')
-    object_name = name_line[0]
+    name_line = join_words(object[0].split(' ')[:-1], ' ')
+    input_name = object[0].strip().split(' ')[-1].replace('"','')
+    object_name = name_line
+    groups[object_name] = [input_name]
     
-    for line in object[1:]:
+    for line in object:
+        line = line.strip().replace('"', '')
         line_words = line.split(' ')
         is_processed = False
         for unique_object in object_values_dict[object_name]:
@@ -197,7 +288,7 @@ def create_expanded_cli_commands():
                     expanded_file.write(f'{indentation}{new_line}\n')
 
 def populate_objects_value_dict():
-    cli_commands_path = 'test_cli_commands.txt'
+    cli_commands_path = 'expanded_cli_commands.txt'
     with open(cli_commands_path) as cli_file:
         user_input = re.compile(r'<\w+>')
         lines = cli_file.readlines()

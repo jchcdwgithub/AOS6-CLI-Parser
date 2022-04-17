@@ -132,11 +132,10 @@ aaa rfc-3576-server <ipaddr>
 !
 aaa server-group <group>
     allow-fail-through
-    auth-server <name> [ match-authstring contains | equals | starts-with <string> ] [ match-fqdn <string> ] [ position <number> ] [ trim-fqdn ] 
+    auth-server <name> match-option match-fqdn <string> position <number> trim-fqdn 
     clone <group> 
     load-balance 
-    set { role | vlan condition } <attribute> { contains | ends-with | equals
-| not-equals | starts-with } <string> set-value <set-value-str> [ position <number> ]
+    set value <attribute> { contains | ends-with | equals | not-equals | starts-with } <string> set-value <set-value-str> position <number>
 !
 ap regulatory-domain-profile <profile>
     clone <profile> 
@@ -244,7 +243,7 @@ interface { fastethernet | gigabitethernet } <slot>/<module>/<port>
     tunneled-node-port
     xsec { point-to-point <macaddr> <key> allowed vlan <vlans> [ <mtu> ] | vlan <vlan> }
 !
-interface loopback
+interface loopback <loopback>
     ip address <ipaddr> 
     ipv6 address <ipv6-prefix>
 !
@@ -252,12 +251,12 @@ interface vlan <vlan>
     bandwidth-contract <name>
     bcmc-optimization
     description <string>
-    ip { access-group <name> in } | { address <ipaddr> | dhcp-client client-id <cid> | internal | pppoe } | helper-address <address> | igmp [ proxy ][ snooping ] | local-proxy-arp | nat[ inside ] | { ospf { area <area> | authentication <auth> | cost <cost> | dead-interval <dead> | hello-interval <hello> | message-digest-key <key> | priority <prio> | retransmit-interval <interval> | transmit-delay <delay> } | pppoe-max-segment-size <mss> | pppoe-password <password> | pppoe-service-name <service-name> | pppoe-username <username> | routing }
+    ip { access-group <name> in } | { address <ipaddr> | dhcp-client client-id <cid> | internal | pppoe } | helper-address <address> | igmp [ proxy ] [ snooping ] | local-proxy-arp | nat[ inside ] | { ospf { area <area> | authentication <auth> | cost <cost> | dead-interval <dead> | hello-interval <hello> | message-digest-key <key> | priority <prio> | retransmit-interval <interval> | transmit-delay <delay> } | pppoe-max-segment-size <mss> | pppoe-password <password> | pppoe-service-name <service-name> | pppoe-username <username> | routing }
     ipv6 { address <ipv6-address> link-local | [ <ipv6-prefix>/<prefix-length> | eui-64 ] } | { dhcp server <pool name> } | { mld snooping | proxy { fastethernet | gigabitethernet | port-channel } <slot>/<port> } | nd { ra [ dns | enable | hop-limit | interval | life-time | managed-config-flag | mtu | other-config-flag | preference | prefix ] | reachable-time <value> | retransmit-time <value> } }
     mtu <number>
-    multimode-auth { lease-time }
-    operstate { up }
-    option-82 { ap-name essid } | { mac [ essid ] }
+    multimode-auth lease-time
+    operstate up
+    option-82 { ap-name essid | mac essid }
     shutdown
     suppress-arp
 !
@@ -266,16 +265,16 @@ ip dhcp pool <name>
     dns-server <ipaddr>
     domain-name <name>
     lease <days> <hours> <minutes>
-    netbios-name-server { <ipaddr> | import }
+    netbios-name-server <option> 
     network <ipaddr> <netmask> 
     option <code> ip <ipaddr>
-    pooltype ipupsell | private | public
+    pooltype <pooltype>
     vendor-class-identifier
 !
 ip name-server <ipaddr>
     master-redundancy peer-ip <ipaddr> 
     ipsec <key> 
-    ipsec-custom-cert master-mac <mac> ca-cert <ca> server-cert <cert> [ suite‑b gcm-128 | gcm-256 ]
+    ipsec-custom-cert master-mac <mac> ca-cert <ca> server-cert <cert> <optional>
     ipsec-factory-cert master-mac <mac>
 !
 master-redundancy master-vrrp <id> 
@@ -292,9 +291,7 @@ netdestination <name>
     network <ipaddr> <netmask> [ position <number> ] 
     range <start-ipaddr> <end-ipaddr> [ position <number> ]
 !
-netservice <name> <protocol> | tcp | udp { list <input> } | { <port> [ <port> ] } [ ALG <service> ]
-!
-ntp server { <IPv4/IPv6 Address> | [ iburst ] [ key ] }
+ntp server <IPv4/IPv6 Address> 
 !
 rf am-scan-profile <profile-name>
     clone <profile>
@@ -380,17 +377,6 @@ rf ht-radio-profile <profile>
     diversity-spreading-workaround
     honor-40MHz-intolerance
 !
-snmp-server 
-    community <string>
-    enable trap
-    engine-id
-    host <IPv4/IPv6 Address> | version { 1 <name> udp-port <port> } | 2c | { 3 <name> } [ inform ] [ interval   <seconds> ] [ retrycount <number> ] [ udp-port <port> ] }
-    inform queue-length <size>
-    source controller-ip
-    stats
-    trap enable | disable | { source [ IPv4/IPv6 Address ] }
-    user <name> [ auth-prot { md5 | sha } <password> ] [ priv-prot { AES | DES } <password> ]
-!
 user-role <name>
     access-list { eth | mac | session } <acl> [ ap-group <group> ] [ position <number> ]
     bw-contract <name> [ per-user ] { downstream | upstream }
@@ -418,7 +404,7 @@ user-role <name>
 !
 vlan <id> [ <description> ] | [ <name> <vlan-ids> ] | [ range <range> ] | [ wired aaa-profile <profile> ]
 !
-vlan-name <name> [ assignment { even | hash } ]
+vlan-name <name>
 !
 vrrp <id>
     advertise <interval> 
@@ -564,8 +550,3 @@ wlan virtual-ap <profile-name>
 !
 localip <ipaddr> 
     ipsec <key> 
-!
-local-userdb add { generate-username | username <name> } { generate-password | password <passwd> } [ comment <g_comments> ][ email <email> ] [ expiry { duration <minutes> | time <hh/mm/yyy> <hh:mm> } ] [ guest-company <g_company> ][ guest-fullname <g_fullname> ][ guest-phone <g-phone> ][ mode disable ][ opt-field-1 <opt1> ][ opt-field-2 <opt2> ][ opt-field-3 <opt3> ][ opt-field-4 <opt4> ][ [ remote-ip <ip-addr> ][ role <role> ][ sponsor-dept <sp_dept> ][ sponsor-mail <sp_email> ][ sponsor-fullname <sp_fullname> ][ sponsor-name <sp_name> ][ start-time <mm/dd/yyyy> <hh.mm> ]
-!
-local-userdb-guest add { generate-username | username <name> } { generate-password | password <passwd> } [ comment <g_comments> ][ email <email> ] [ expiry { duration <minutes> | time <hh/mm/yyy> <hh:mm> } ] [ guest-company <g_company> ][ guest-fullname <g_fullname> ][ guest-phone <g-phone> ][ mode disable ][ opt-field-1 <opt1> ][ opt-field-2 <opt2> ][ opt-field-3 <opt3> ][ opt-field-4 <opt4> ][ sponsor-dept <sp_dept> ][ sponsor-mail <sp_email> ][ sponsor-fullname <sp_fullname> ][ sponsor-name <sp_name> ][ start-time <mm/dd/yyyy> <hh.mm> ]
-!
