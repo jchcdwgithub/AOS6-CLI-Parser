@@ -86,3 +86,17 @@ def test_is_simple_parameter_returns_false_for_multi_keyword_pair_line():
     generated = aos6parser.is_simple_parameter(line)
     expected = False
     assert expected == generated
+
+def test_is_simple_returns_false_for_line_with_multiple_user_inputs():
+    
+    line = 'lease <days> <hours> <seconds>'
+    generated = aos6parser.is_simple_parameter(line)
+    expected = False
+    assert expected == generated
+
+def test_is_simple_returns_false_for_line_with_keyword_after_user_input():
+
+    line = 'access-group <name> in'
+    generated = aos6parser.is_simple_parameter(line)
+    expected = False
+    assert expected == generated

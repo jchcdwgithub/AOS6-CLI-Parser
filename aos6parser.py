@@ -66,6 +66,8 @@ def gather_objects(lines):
         current_object = [current_line]
         current_object_name = get_object_name_from_line(current_line)
         current += 1
+        if current == len(lines):
+            break
         while lines[current].strip() != '!':
             current_object.append(lines[current])
             current += 1
@@ -290,7 +292,7 @@ def create_expanded_cli_commands():
 def populate_objects_value_dict():
     cli_commands_path = 'expanded_cli_commands.txt'
     with open(cli_commands_path) as cli_file:
-        user_input = re.compile(r'<\w+>')
+        user_input = re.compile(r'<.+>')
         lines = cli_file.readlines()
         current = 0
         while(current < len(lines)):
@@ -308,31 +310,78 @@ def populate_objects_value_dict():
                         object_values_dict[object_name].append(command)
                     else:
                         if object_name in multi_value_parameter:
-                            multi_value_parameter[object_name].append(current_line)
+                            multi_value_parameter[object_name].append(current_line.split(' ')[0])
                         else:
-                            multi_value_parameter[object_name] = [current_line]
+                            multi_value_parameter[object_name] = [current_line.split(' ')[0]]
                     current += 1
                 current += 1
 
 def is_simple_parameter(line):
     words = line.split(' ')
     is_simple = True
+    multiple_user_input = False
     user_input = re.compile(r'<\w+>')
     keyword_pairs = {}
     current_keyword = ''
     for word in words:
         if user_input.match(word):
             if current_keyword in keyword_pairs:
-                keyword_pairs[current_keyword].append(word)
+                is_simple = False
+                multiple_user_input = True
+                break
             else:
                 keyword_pairs[current_keyword] = [word]
         else:
             if current_keyword in keyword_pairs:
                 current_keyword = '' 
             if current_keyword == '':
-                current_keyword = word
+                if len(keyword_pairs.keys()) == 1:
+                    is_simple = False
+                    break
+                else:
+                    current_keyword = word
             else:
                 current_keyword += f' {word}'
-    if len(keyword_pairs.keys()) > 1:
+    if len(keyword_pairs.keys()) > 1 or multiple_user_input:
         is_simple = False
     return is_simple
+
+def process_bandwidth_contract(bwc_line):
+    bwc_words = bwc_line.strip().split(' ')
+    bwc_dict = {}
+    base_name = bwc_words[0]
+    current = 0
+    current_word = bwc_words[current]
+    if current_word == 'app' or current_word == 'appcategory':
+        current_name = base_name + ' ' + 'application'
+        bwc_dict[current_name] = current_word
+        current_name = base_name + ' ' + current_word
+        current += 1
+        bwc_dict[current_name] = bwc_words[current]
+        current += 1
+        bwc_dict[base_name] = bwc_words[current]
+        current += 1
+        current_name = current_name + ' ' + bwc_words[current]
+        bwc_dict[current_name] = bwc_words[current]
+    else:
+        bwc_dict[base_name] = bwc_words[current]
+        current += 1
+        current_name = base_name + ' direction'
+        bwc_dict[current_name] = bwc_words[current]
+    return bwc_dict
+
+def process_int_access_group(ag_line):
+    ag_words = ag_line.strip().split(' ')
+    ag_dict = {}
+    base_name = ag_words[0] + ' ' + ag_words[1]
+    current = 2
+    ag_name = ag_words[current]
+    current += 1
+    current_word = ag_words[current]
+    name = base_name + ' ' + current_word
+    ag_dict[name] = ag_name
+    return ag_dict
+
+def is_in_multi_value_dict(object, line):
+    word = line.strip().split(' ')[0]
+    return word in multi_value_parameter[object]
