@@ -131,30 +131,33 @@ def group_object_attributes(object):
     input_name = object[0].strip().split(' ')[-1].replace('"','')
     object_name = name_line
     groups[object_name] = [input_name]
-    
-    for line in object:
-        line = line.strip().replace('"', '')
-        line_words = line.split(' ')
-        is_processed = False
-        for unique_object in object_values_dict[object_name]:
-            unique_values = unique_object.split(' ')
-            match = 0
-            current_group_name = ''
-            for unique_value,word in zip(unique_values,line_words):
-                if word == unique_value or word in unique_value:
-                    match += 1
-                    if current_group_name == '':
-                        current_group_name += word
-                    else:
-                        current_group_name += ' ' + word
-                    if match == len(unique_values):
-                        is_processed = True
-                        if current_group_name in groups:
-                            groups[current_group_name].append(line[len(current_group_name)+1:])
+
+    if object_name in object_values_dict:    
+        for line in object[1:]:
+            line = line.strip().replace('"', '')
+            line_words = line.split(' ')
+            is_processed = False
+            for unique_object in object_values_dict[object_name]:
+                unique_values = unique_object.split(' ')
+                match = 0
+                current_group_name = ''
+                for unique_value,word in zip(unique_values,line_words):
+                    if word == unique_value or word in unique_value:
+                        match += 1
+                        if current_group_name == '':
+                            current_group_name += word
                         else:
-                            groups[current_group_name] = [line[len(current_group_name)+1:]]
-            if is_processed:
-                break
+                            current_group_name += ' ' + word
+                        if match == len(unique_values):
+                            is_processed = True
+                            if current_group_name in groups:
+                                groups[current_group_name].append(line[len(current_group_name)+1:])
+                            else:
+                                groups[current_group_name] = [line[len(current_group_name)+1:]]
+                if is_processed:
+                    break
+    elif object_name in special_objects_dict:
+        groups = special_objects_dict[object_name](object[1:], groups)
     return groups
 
 def get_max_columns(objects):
@@ -385,3 +388,14 @@ def process_int_access_group(ag_line):
 def is_in_multi_value_dict(object, line):
     word = line.strip().split(' ')[0]
     return word in multi_value_parameter[object]
+
+def process_acl_sess(aces, group):
+    joined_aces = []
+    joined_aces_string = ''
+    for ace in aces:
+        joined_aces_string += ace.lstrip()
+    joined_aces.append(joined_aces_string)
+    group['acl session aces'] = joined_aces
+    return group
+
+special_objects_dict = {'ip access-list session' : process_acl_sess}
