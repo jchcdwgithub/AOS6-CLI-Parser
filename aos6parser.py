@@ -1,4 +1,8 @@
 from docx import Document
+from openpyxl import Workbook, load_workbook
+from openpyxl.worksheet.table import Table
+from openpyxl.styles import PatternFill, Font
+from openpyxl.utils import get_column_letter
 import re
 
 cli_to_api_dict = {'ip access-list session' : 'Session ACL',
@@ -24,8 +28,211 @@ cli_to_api_dict = {'ip access-list session' : 'Session ACL',
                                                           'cppm username' : 'CPPM Username',
                                                           'cppm password' : 'CPPM PW',
                                                           'source-interface vlan' : 'Source Interface VLAN',
-                                                          'source-interface ip6addr' : 'Source Interface IPv6 Addr'
-                                                        }
+                                                          'source-interface ip6addr' : 'Source Interface IPv6 Addr',
+                                                          'key' : 'Rad Server Key',
+                                                          'nas-identifier' : 'Rad Server NAS-ID',
+                                                        },
+                    'aaa server-group' : { 'aaa server-group' : 'Server Group',
+                                           'auth-server' : 'SG Server Name',},
+                    'aaa profile' : { 'aaa profile': 'AAA Profile',
+                                      'rfc-3576-server' : 'AAA RFC3576 IP',
+                                      'dot1x-default-role' : 'AAA 1X Default Role',
+                                      'dot1x-server-group': 'AAA 1X Server Group',
+                                      'authentication-dot1x' : 'AAA 1X Profile',
+                                      'authentication-mac' : 'AAA MAC Profile',
+                                      'initial-role' : 'AAA Initial Role',
+                                      'mac-default-role' : 'AAA MAC Default Role',
+                                      'mac-server-group' : 'AAA MAC Server Group',
+                                      'download-role': 'AAA DL Role',
+                                      'l2-auth-fail-through': 'AAA L2 Auth Failthrough',},
+                    'ap system-profile' : { 'ap system-profile' : 'AP System Profile',
+                                            'lms-ip' : 'AP Sys LMS IP',
+                                            'bkup-lms-ip' : 'AP Sys Bkup LMS IP',
+                                            'shell-passwd' : 'AP Sys AP Console PW'},
+                    'ap regulatory-domain-profile' : { 'ap regulatory-domain-profile' : 'Reg Domain Profile',
+                                                       'valid-11a-channel' : '5 GHz Channels',
+                                                       'valid-11g-channel' : '2.4 GHz Channels',
+                                                       'valid-11a-40mhz-channel-pair' : '5 GHz 40 MHz Channels',
+                                                       'valid-11g-40mhz-channel-pair' : '2.4 GHz 40 MHz Channels',
+                                                       'valid-11a-80mhz-channel-group': '5 GHz 80 MHz Channels',
+                                                       'country-code' : 'Reg Domain Country Code',
+                                                       },
+                    'rf arm-profile' : { 'rf arm-profile' : 'RF ARM Profile',
+                                         '40MHz-allowed-bands' : '40 MHz Allowed Bands',
+                                         '80MHz support' : '80 MHz Support',
+                                         'acceptable-coverage-index' : 'Acceptable Coverage Index',
+                                         'active-scan' : 'Active Scan',
+                                         'aggressive-scan' : 'Aggressive Scan',
+                                         'assignment' : 'Assignment',
+                                         'backoff-time' : 'ARM Backoff Time',
+                                         'cellular-handoff-assist' : 'Cellular Handoff Assist',
+                                         'channel-quality-aware-arm' : 'Channel Quality Aware ARM',
+                                         'channel-quality-aware-threshold' : 'Channel Quality Aware Threshold',
+                                         'channel-quality-wait-time' : 'Channel Quality Wait Time',
+                                         'client-aware' : 'ARM Client Aware',
+                                         'client-match' : 'ARM Client Match',
+                                         'cm-band-a-min-signal' : 'CM Band A Min Sig',
+                                         'cm-band-g-max-signal' : 'CM Band G Max Sig',
+                                         'cm-lb-client-thresh' : 'CM LB Client Threshold',
+                                         'cm-lb-signal-delta' : 'CM LB Sig Delta',
+                                         'cm-lb-thresh' : 'CM LB Threshold',
+                                         'cm-max-steer-fails' : 'CM Max Steer Fails',
+                                         'cm-mu-client-thresh' : 'CM MU Client Threshold',
+                                         'cm-mu-snr-thresh' : 'CM MU SNR Threshold',
+                                         'cm-report-interval' : 'CM Report Interval',
+                                         'cm-stale-age' : 'CM Stale Age',
+                                         'cm-steer-timeout' : 'CM Steer Timeout',
+                                         'cm-sticky-check_intvl' : 'CM Sticky Check Interval',
+                                         'cm-sticky-min-signal' : 'CM Sticky Min Signal',
+                                         'cm-sticky-snr' : 'CM Sticky SNR',
+                                         'cm-sticky-snr-delta' : 'CM Sticky SNR Delta',
+                                         'cm-update-interval' : 'CM Update Interval',
+                                         'error-rate-threshold' : 'Error Rate Threshold',
+                                         'error-rate-wait-time' : 'Error Rate Wait Time',
+                                         'free-channel-index' : 'Free Channel Index',
+                                         'ideal-coverage-index' : 'Ideal Coverage Index',
+                                         'load-aware-scan-threshold' : 'Load Aware Scan Threshold',
+                                         'max-tx-power' : 'Max TX Power',
+                                         'min-scan-time' : 'Min Scan Time',
+                                         'min-tx-power' : 'Min TX Power',
+                                         'mode-aware' : 'Mode Aware',
+                                         'multi-band-scan' : 'Multi-Band Scan',
+                                         'ota-updates' : 'OTA Updates',
+                                         'ps-aware-scan' : 'PS Aware Scan',
+                                         'rogue-ap-aware' : 'Rogue AP Aware',
+                                         'scan mode' : 'ARM Scan Mode',
+                                         'scan-interval' : 'ARM Scan Interval',
+                                         'scanning' : 'ARM Scanning',
+                                         'video-aware-scan' : 'ARM Video Aware Scan',
+                                         'voip-aware-scan' : 'ARM VOIP Aware Scan',
+
+                    },
+                    'rf optimization-profile' : { 'rf optimization-profile' : 'RF Opt Profile',
+                                                  'handoff-assist' : 'Handoff Assist',
+                                                  'low-rssi-threshold' : 'Low RSSI Threshold',
+                                                  'rssi-check-frequency' : 'RSSI Check Freq',
+                                                  'rssi-falloff-wait-time' : 'RSSI Falloff Wait Time',
+
+                    },
+                    'rf event-thresholds-profile' : { 'rf event-thresholds-profile' : 'RF Event Thresholds Profile',
+                                                      'bwr-high-wm' : 'BWR High WM',
+                                                      'bwr-low-wm' : 'BWR Low WM',
+                                                      'detect-frame-rate-anomalies' : 'Detect Frame Rate Anomalies',
+                                                      'fer-high-wm' : 'FER High WM',
+                                                      'fer-low-wm' : 'FER Low WM',
+                                                      'frr-high-wm' : 'FRR High WM',
+                                                      'frr-low-wm' : 'FRR Low WM',
+                                                      'flsr-high-wm' : 'FLSR High WM',
+                                                      'flsr-low-wm' : 'FLSR Low WM',
+                                                      'fnur-high-wm' : 'FNUR High WM',
+                                                      'fnur-low-wm' : 'FNUR Low WM',
+                                                      'frer-high-wm' : 'FRER High WM',
+                                                      'frer-low-wm' : 'FRER Low WM',
+                    },
+                    'rf am-scan-profile' : { 'rf am-scan-profile' : 'RF AM Scan Prof',
+                                             'dwell-time-active-channel' : 'Dwell Time Active Chan',
+                                             'dwell-time-other-reg-domain-channel' : 'Dwell Time Other Reg Dom Chan',
+                                             'dwell-time-reg-domain-channel' : 'Dwell Time Reg Dom Chan',
+                                             'scan-mode' : 'AM Scan Prof Scan Mode',
+
+                    },
+                    'rf dot11a-radio-profile' : {'rf dot11a-radio-profile' : '5 GHz Radio Prof',
+                                                 'am-scan-profile' : '5 GHz AM Scan Prof',
+                                                 'arm-profile' : '5 GHz ARM Prof',
+                                                 'beacon-period' : '5 GHz Beacon Period',
+                                                 'cap-reg-eirp' : '5 GHz Cap Reg EIRP',
+                                                 'cell-size-reduction' : 'Cell Size Reduction',
+                                                 'channel' : '5 GHz Prof Channel',
+                                                 'channel-reuse' : '5 GHz Prof Chan Reuse',
+                                                 'csa-count' : 'CSA Count',
+                                                 'ht-radio-profile' : 'HT Radio Profile',
+                                                 'maximum-distance' : 'Max Distance',
+                                                 'mgmt-frame-throttle-interval' : 'MGMT Frame Throttle Interval',
+                                                 'mgmt-frame-throttle-limit' : 'MGMT Frame Throttle Limit',
+                                                 'mode' : '5 GHz Radio Mode',
+                                                 'slb-mode' : 'SLB Mode',
+                                                 'slb-update-interval' : 'SLB Update Interval',
+                                                 'tpc-power' : 'TPC Power',
+                                                 'tx-power' : '5 GHz Radio TX Power',
+                    },
+                    'rf dot11g-radio-profile' : {'rf dot11g-radio-profile' : '11g Radio Prof',
+                                                 'am-scan-profile' : '11g AM Scan Prof',
+                                                 'arm-profile' : '11g ARM Prof',
+                                                 'beacon-period' : '11g Beacon Period',
+                                                 'cap-reg-eirp' : '11g Cap Reg EIRP',
+                                                 'cell-size-reduction' : 'Cell Size Reduction',
+                                                 'channel' : '11g Prof Channel',
+                                                 'channel-reuse' : '11g Prof Chan Reuse',
+                                                 'csa-count' : 'CSA Count',
+                                                 'ht-radio-profile' : 'HT Radio Profile',
+                                                 'maximum-distance' : 'Max Distance',
+                                                 'mgmt-frame-throttle-interval' : 'MGMT Frame Throttle Interval',
+                                                 'mgmt-frame-throttle-limit' : 'MGMT Frame Throttle Limit',
+                                                 'mode' : '11g Radio Mode',
+                                                 'slb-mode' : 'SLB Mode',
+                                                 'slb-update-interval' : 'SLB Update Interval',
+                                                 'tpc-power' : 'TPC Power',
+                                                 'tx-power' : '11g Radio TX Power',
+                                                 },
+                    'wlan ht-ssid-profile' : {'wlan ht-ssid-profile' : 'HT SSID Profile',
+                                              '40MHz-enable' : '40 MHz Enable',
+                                              '80MHz-enable' : '80 MHz Enable',
+                                              'ba-amsdu-enable' : 'BA AMSDU Enable',
+                                              'high-throughput-enable' : 'HT enable',
+                                              'ldpc' : 'LDPC',
+                                              'legacy-stations' : 'Legacy Stations',
+                                              'max-rx-ampdu-size' : 'Max RX AMPDU Size',
+                                              'max-tx-ampdu-size' : 'Max TX AMPDU Size',
+                                              'max-tx-ampdu-count-be' : 'Max TX AMPDU Count BE',
+                                              'max-tx-ampdu-count-bk' : 'Max TX AMPDU Count BK',
+                                              'max-tx-ampdu-count-vi' : 'Max TX AMPDU Count VI',
+                                              'max-tx-ampdu-count-vo' : 'Max TX AMPDU Count VO',
+                                              'max-vht-mpdu-size' : 'Max VHT MPDU Size',
+                                              'min-mpdu-start-spacing' : 'Min MPDU Start Spacing',
+                                              'mpdu-agg' : 'MPDU AGG',
+                                              'short-guard-intvl-20MHz' : 'Short GI 20 MHz',
+                                              'short-guard-intvl-40MHz' : 'Short GI 40 MHz',
+                                              'short-guard-intvl-80MHz' : 'Short GI 80 MHz',
+                                              'stbc-rx-streams' : 'STBC RX Streams',
+                                              'stbc-tx-streams' : 'STBC TX Streams',
+                                              'supported-mcs-set' : 'Supported MCS Set',
+                                              'temporal-diversity' : 'Temporal Diversity',
+                                              'very-high-throughput-enable' : 'VHT Enable',
+                                              'vht-mu-txbf-enable' : 'VHT MU TXBF Enable',
+                                              'vht-supported-mcs-map' : 'VHT Supported MCS Map',
+                                              'vht-txbf-explicit-enable' : 'VHT TXBF Exp Enable',
+                                              'vht-txbf-sounding-interval' : 'VHT TXBF Sounding Interval'
+                                              },
+                    'wlan ssid-profile' : {'wlan ssid-profile' : 'SSID Profile',
+                                           'a-basic-rates' : 'A Rates Required',
+                                           'a-tx-rates' : 'A Rates Allowed',
+                                           'ageout' : 'Station Ageout',
+                                           'auth-req-thresh' : 'Auth Request Threshold',
+                                           'dtim-period' : 'DTIM Period',
+                                           'edca-parameters-profile ap' : 'EDCA Profile AP',
+                                           'edca-parameters-profile station' : 'EDCA Profile Client STA',
+                                           'essid' : 'ESSID',
+                                           'g-basic-rates' : 'G Rates Required',
+                                           'g-tx-rates' : 'G Rates Allowed',
+                                           'ht-ssid-profile' : 'HT SSID Prof',
+                                           'max-clients' : 'SSID Max Clients',
+                                           'max-retries' : 'SSID Max Retries',
+                                           'max-tx-fails' : 'SSID Max TX Fails',
+                                           'opmode' : 'WLAN OPMODE',
+                                           'rts-threshold' : 'RTS Threshold',
+                                           'wepkey1' : 'SSID WEPKEY1',
+                                           'wepkey2' : 'SSID WEPKEY2',
+                                           'wepkey3' : 'SSID WEPKEY3',
+                                           'wepkey4' : 'SSID WEPKEY4',
+                                           'weptxkey' : 'SSID WEP TX KEY',
+                                           'wmm-be-dscp' : 'WMM BE DSCP',
+                                           'wmm-bk-dscp' : 'WMM BK DSCP',
+                                           'wmm-ts-min-inact-int' : 'WMM TS MIN Inactivty Interval',
+                                           'wmm-vi-dscp' : 'WMM VI DSCP',
+                                           'wmm-vo-dscp' : 'WMM VO DSCP',
+                                           'wpa-hexkey' : 'WPA Hexkey',
+                                           'wpa-passphrase' : 'WPA PW',
+                                           },
                    
                    }
 object_values_dict = {}                    
@@ -116,6 +323,8 @@ def add_keys_to_attributes_object(objects):
 
 def process_attribute_list(list):
 
+    if len(list) == 0:
+        return ''
     processed_list = list[0]
     for word in list[1:]:
         processed_list += f' ,{word}'
@@ -389,13 +598,117 @@ def is_in_multi_value_dict(object, line):
     word = line.strip().split(' ')[0]
     return word in multi_value_parameter[object]
 
-def process_acl_sess(aces, group):
+def process_acl(aces, group):
     joined_aces = []
-    joined_aces_string = ''
     for ace in aces:
-        joined_aces_string += ace.lstrip()
-    joined_aces.append(joined_aces_string)
+        joined_aces.append(ace.strip())
     group['acl session aces'] = joined_aces
     return group
 
-special_objects_dict = {'ip access-list session' : process_acl_sess}
+def transform_attribute_array_to_array_tables(object_name, attribute_array):
+    table_headers = []
+    #object_dict = cli_to_api_dict[object_name]
+    arrays = []
+    for key in attribute_array:
+        table_headers.append(key)
+        arrays.append(attribute_array[key])
+    number_of_objects = len(arrays[0])
+    current = 0
+    zipped_arrays = [table_headers]
+    while current < number_of_objects:
+        current_array = []
+        for array in arrays:
+            current_array.append(array[current])
+        current += 1
+        zipped_arrays.append(current_array)
+    return zipped_arrays
+
+def write_to_excel(title, data, workbook, start):
+    
+    current_ws = workbook.create_sheet(title=title)
+    title_row_color = 'C0504D'
+
+    for row in data:
+        current_ws.append(row)
+
+    colors = ['E6B8B7', 'F2DCDB']
+    color_index = 0
+    rows = current_ws.rows
+    for row in rows:
+        if color_index == 0:
+            for cell in row:
+                cell.fill = PatternFill('solid', fgColor = title_row_color)
+                cell.font = Font(color='FFFFFF')
+        else:
+            for cell in row:
+                cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
+                cell.font = Font(color='000000')
+        color_index += 1
+    
+    column_widths = []
+    for row in data:
+        for i, cell in enumerate(row):
+            if len(column_widths) > i:
+                if len(cell) > column_widths[i]:
+                    column_widths[i] = len(cell)
+            else:
+                column_widths += [len(cell)]
+    
+    for i, column_width in enumerate(column_widths,1):  # ,1 to start at 1
+        current_ws.column_dimensions[get_column_letter(i)].width = column_width + 5
+
+    table = Table(displayName='SSID',ref=f'A{start}:F{start + len(data)}')
+    current_ws.add_table(table)
+
+def add_table_to_worksheet(data,worksheet,table_name='',start=1):
+    
+    title_row_color = 'C0504D'
+    cell_letter = [letter.upper() for letter in 'abcdefghijklmnopqrstuvwxyz']
+    end_cell_number = start + len(data) - 1
+    end_cell = cell_letter[len(data[0])-1]
+    num_columns = len(data[0])
+
+    current = start
+    data_index = 0
+    while current <= end_cell_number:
+        current_column = 0
+        current_row_cells = []
+        while current_column < num_columns:
+            current_row_cells.append(worksheet[f'{cell_letter[current_column]}{current}'])
+            current_column += 1
+        current_data_row = data[data_index]
+        for cell,data_value in zip(current_row_cells,current_data_row):
+            cell.value = data_value
+        current += 1
+        data_index += 1 
+
+    colors = ['E6B8B7', 'F2DCDB']
+    color_index = 0
+    rows = worksheet[start:end_cell_number]
+    for row in rows:
+        if color_index == 0:
+            for cell in row:
+                cell.fill = PatternFill('solid', fgColor = title_row_color)
+                cell.font = Font(color='FFFFFF')
+        else:
+            for cell in row:
+                cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
+                cell.font = Font(color='000000')
+        color_index += 1
+    
+    column_widths = []
+    for row in data:
+        for i, cell in enumerate(row):
+            if len(column_widths) > i:
+                if len(cell) > column_widths[i]:
+                    column_widths[i] = len(cell)
+            else:
+                column_widths += [len(cell)]
+    
+    for i, column_width in enumerate(column_widths,1):  
+        worksheet.column_dimensions[get_column_letter(i)].width = column_width + 5
+
+    table = Table(displayName=table_name,ref=f'A{start}:{end_cell}{end_cell_number}')
+    worksheet.add_table(table)
+
+special_objects_dict = {'ip access-list session' : process_acl }

@@ -1,5 +1,6 @@
 /.cli_commands.txt.un~
 /*.txt
+/*.xlsx
 /.pytest_cache
 /acl_parse.docx
 /API raw JSON
