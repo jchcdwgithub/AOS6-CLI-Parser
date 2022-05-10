@@ -936,4 +936,37 @@ def match_cli_output_to_rule(object_name, cli_output):
                 break
         return correct_rule
 
+def populate_cli_rules():
+    ''' Read from the expanded cli commands and load the rules into the aos6_cli_rules dictionary. '''
+
+    with open('more_cli_commands.txt') as cli_txt_rules:
+        rules_lines = cli_txt_rules.readlines()
+        current_index = 0
+        while current_index < len(rules_lines):
+            header_name = get_header(rules_lines[current_index])
+            aos6_cli_rules[header_name] = []
+            while current_index < len(rules_lines):
+                current_line = rules_lines[current_index].strip()
+                current_index += 1
+                if current_line != '!':
+                    aos6_cli_rules[header_name].append(current_line)
+                else:
+                    break
+
+def get_header(rule):
+    ''' Returns the name of the object from the first line of the rules section. '''
+    
+    rule_words = rule.split(' ')
+    header = rule_words[0]
+    index = 1
+    while index < len(rule_words):
+        if '<' in rule_words[index]:
+            index +=1 
+            break
+        else:
+            header += f" {rule_words[index]}"
+            index += 1
+    # if more then complicated object name ...
+    return header
+
 special_objects_dict = {'ip access-list session' : process_acl }
