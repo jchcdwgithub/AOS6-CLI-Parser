@@ -238,6 +238,7 @@ cli_to_api_dict = {'ip access-list session' : 'Session ACL',
 object_values_dict = {}                    
 one_line_objects_dict = {}
 multi_value_parameter = {}
+aos6_cli_rules = {}
 
 def parse():
     try:
@@ -485,7 +486,7 @@ def process_line(line):
 
 def create_expanded_cli_commands():
     cli_commands_path = 'test_cli_commands.txt'
-    expanded_cli_commands = 'expanded_cli_commands.txt'
+    expanded_cli_commands = 'more_cli_commands.txt'
     cli_lines = []
     with open(cli_commands_path) as cli_file:
         cli_lines = cli_file.readlines()
@@ -605,6 +606,28 @@ def process_acl(aces, group):
     group['acl session aces'] = joined_aces
     return group
 
+def process_bwc(line):
+    bwc_values = []
+    line_words = line.split(' ')
+    header = f"{line_words[0]} {line_words[1]}"
+    bwc_name = ''
+    if '"' in line_words[2]:
+        bwc_name += line_words[2].replace('"', '')
+        current = 3
+        while current < len(line_words):
+            if '"' in line_words[current]:
+                bwc_name += '_' + line_words[current].replace('"','')
+                current += 1
+                break
+            else:
+                bwc_name += '_' + line_words[current]
+                current += 1
+    bwc_name_header = f"{header} {bwc_name}"
+    bwc_values.append({bwc_name_header: bwc_name})
+    bwc_type = f"{header} {line_words[current]}"
+    bwc_values.append({bwc_type: line_words[current+1]})
+    return bwc_values
+
 def transform_attribute_array_to_array_tables(object_name, attribute_array):
     table_headers = []
     #object_dict = cli_to_api_dict[object_name]
@@ -623,6 +646,149 @@ def transform_attribute_array_to_array_tables(object_name, attribute_array):
         zipped_arrays.append(current_array)
     return zipped_arrays
 
+
+def build_tables_arrays(attributes_array):
+    tables_arrays = []
+    for object in attributes_array:
+        object_name = list(object.keys())[0]
+        tables_arrays.append(transform_attribute_array_to_array_tables(object_name,object))
+    return tables_arrays
+
+def write_tables_to_excel_worksheets(tables_arrays):
+    grouped_tables = group_tables(tables_arrays)
+    workbook = Workbook()
+    for group in grouped_tables:
+        current_worksheet = workbook.create_sheet(title=group[0])
+        current_row = 1
+        for table in group[1]:
+            table_name = table[0][0].replace(' ','_')
+            current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
+    workbook.save('aos6_cli_output.xlsx')
+
+def group_tables(tables_arrays):
+    grouped_tables = {}
+    for table in tables_arrays:
+        group_membership = classify_table(table[0][0])
+        if group_membership in grouped_tables:
+            grouped_tables[group_membership].append(table)
+        else:
+            grouped_tables[group_membership] = [table]
+    grouped_tables_pairs = []
+    for membership in grouped_tables:
+        grouped_tables_pairs.append((membership,grouped_tables[membership]))
+    return grouped_tables_pairs
+
+def classify_table(table_header):
+    if is_in_ap_ws(table_header):
+        return 'ap'
+    elif is_in_roles_ws(table_header):
+        return 'roles_policies'
+    elif is_in_wlan_ws(table_header):
+        return 'wlan'
+    elif is_in_security_ws(table_header):
+        return 'security'
+    elif is_in_net_services_ws(table_header):
+        return 'net_services'
+    elif is_in_interfaces_ws(table_header):
+        return 'interface'
+    elif is_in_radio_ws(table_header):
+        return 'radio'
+    elif is_in_crypto_ws(table_header):
+        return 'crypto'
+    elif is_in_controller_ws(table_header):
+        return 'controller'
+    elif is_in_ids_ws(table_header):
+        return 'ids_wms'
+    elif is_in_services_ws(table_header):
+        return 'services'
+    elif is_in_l2_l3_ws(table_header):
+        return 'l2_l3'
+    else:
+        return 'misc'
+
+def is_in_ap_ws(table_header):
+    starts_with_ap = re.compile(r'^ap[ -]')
+    starts_with_iap = re.compile(r'^iap')
+    starts_with_provision_ap = re.compile(r'^provision-ap')
+    return is_in_worksheet([starts_with_ap, starts_with_iap, starts_with_provision_ap], table_header)
+
+def is_in_l2_l3_ws(table_header):
+    starts_with_ip = re.compile(r'^ip')
+    starts_with_spt = re.compile(r'^spanning-tree')
+    starts_with_router = re.compile(r'^router')
+    starts_with_vrrp = re.compile(r'^vrrp')
+    starts_with_vlan = re.compile(r'^vlan')
+    return is_in_worksheet([starts_with_ip, starts_with_spt, starts_with_router, starts_with_vrrp, starts_with_vlan], table_header)
+
+def is_in_wlan_ws(table_header):
+    starts_with_wlan = re.compile(r'^wlan')
+    return is_in_worksheet([starts_with_wlan], table_header)
+
+def is_in_security_ws(table_header):
+    starts_with_aaa = re.compile(r'^aaa')
+    starts_with_local = re.compile(r'^local')
+    return is_in_worksheet([starts_with_aaa, starts_with_local], table_header)
+
+def is_in_net_services_ws(table_header):
+    starts_with_ntp = re.compile(r'^ntp')
+    starts_with_clock = re.compile(r'^clock')
+    starts_with_ip_name = re.compile(r'^ip name')
+    starts_with_ip_dhcp = re.compile(r'^ip dhcp')
+    starts_with_snmp = re.compile(r'^snmp')
+    return is_in_worksheet([starts_with_ntp, starts_with_clock, starts_with_ip_dhcp, starts_with_ip_name, starts_with_snmp], table_header)
+
+def is_in_interfaces_ws(table_header):
+    starts_with_interface = re.compile(r'^interface')
+    starts_with_lacp = re.compile(r'^lacp')
+    return is_in_worksheet([starts_with_interface, starts_with_lacp], table_header)
+
+def is_in_radio_ws(table_header):
+    starts_with_rf = re.compile(r'^rf ')
+    return is_in_worksheet([starts_with_rf], table_header)
+
+def is_in_crypto_ws(table_header):
+    starts_with_crypto = re.compile(r'^crypto')
+    starts_with_tunnel = re.compile(r'tunnel')
+    starts_with_vpdn = re.compile(r'^vpdn')
+    return is_in_worksheet([starts_with_crypto, starts_with_tunnel, starts_with_vpdn], table_header)
+
+def is_in_controller_ws(table_header):
+    starts_with_controller = re.compile(r'^controller')
+    starts_with_cluster = re.compile(r'^cluster')
+    starts_with_master = re.compile(r'^master')
+    starts_with_whitelistdb = re.compile(r'^whitelist-db')
+    starts_with_upgrade = re.compile(r'^upgrade')
+    starts_with_license = re.compile(r'^license')
+    return is_in_worksheet([starts_with_cluster, starts_with_controller, starts_with_master, starts_with_whitelistdb, starts_with_upgrade, starts_with_license], table_header)
+
+def is_in_services_ws(table_header):
+    starts_with_airgroup = re.compile(r'^airgroup')
+    starts_with_app = re.compile(r'^app')
+    starts_with_esi = re.compile(r'^esi')
+    starts_with_voice = re.compile(r'^voice')
+    starts_with_pan = re.compile(r'^pan')
+    starts_with_web_cc = re.compile(r'^web-cc')
+    return is_in_worksheet([starts_with_airgroup, starts_with_app, starts_with_esi, starts_with_voice, starts_with_pan, starts_with_web_cc], table_header)
+
+def is_in_roles_ws(table_header):
+    starts_with_user_role = re.compile(r'^user-role')
+    starts_with_ip_access = re.compile(r'^ip access-list')
+    starts_with_netdest = re.compile(r'^netdest')
+    return is_in_worksheet([starts_with_user_role, starts_with_ip_access, starts_with_netdest], table_header)
+
+def is_in_ids_ws(table_header):
+    starts_with_ids = re.compile(r'^ids')
+    starts_with_wms = re.compile(r'^wms')
+    return is_in_worksheet([starts_with_ids, starts_with_wms], table_header)
+
+def is_in_worksheet(list_of_regexes, table_header):
+    is_member = False
+    for regex in list_of_regexes:
+        if regex.match(table_header):
+            is_member = True
+            break
+    return is_member
+    
 def write_to_excel(title, data, workbook, start):
     
     current_ws = workbook.create_sheet(title=title)
@@ -710,5 +876,64 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=1):
 
     table = Table(displayName=table_name,ref=f'A{start}:{end_cell}{end_cell_number}')
     worksheet.add_table(table)
+    return end_cell_number + 2
+
+def extract_information_from_rule(rule, cli_line):
+    ''' Given a rule, return a list of tuples with the rule_header and associated data. '''
+    
+    header = ''
+    data = ''
+    pair_list = []
+    cli_words = cli_line.split(' ')
+    rule_words = rule.split(' ')
+    first_word = rule_words[0]
+    header += first_word
+    rule_index = 1
+    while rule_index < len(cli_words):
+        if not '<' in rule_words[rule_index]:
+            header += f" {rule_words[rule_index]}"
+            rule_index += 1
+        else:
+            data = cli_words[rule_index]
+            if rule_index + 1 < len(cli_words):
+                rule_index += 1
+                while rule_index < len(cli_words):
+                    if '<' in cli_words[rule_index]:
+                        data += f" {cli_words[rule_index]}"
+                        rule_index += 1
+                    else:
+                        pair_list.append((header, data))
+                        break
+            else:
+                pair_list.append((header,data))
+                rule_index += 1
+            header = first_word
+            data = ''
+    if header.split(' ')[-1] == rule_words[-1]:
+        pair_list.append((header, 'True'))
+    return pair_list
+
+def match_cli_output_to_rule(object_name, cli_output):
+    "Given a cli line, match it with the set of rules associated with the object. "
+    
+    if object_name in aos6_cli_rules:
+        cli_rules = aos6_cli_rules[object_name]
+        current_index = 0
+        correct_rule = ''
+        rule_index = 0
+        cli_words = cli_output.split(' ')
+        for rule in cli_rules:
+            rule_words = rule.split(' ')
+            rule_length = len(rule_words)
+            while current_index < len(cli_words) and rule_index < rule_length:
+                if '<' in rule_words[rule_index] or cli_words[current_index] == rule_words[rule_index]:
+                    current_index += 1
+                    rule_index += 1
+                else:
+                    break
+            if current_index == len(cli_words):
+                correct_rule = rule
+                break
+        return correct_rule
 
 special_objects_dict = {'ip access-list session' : process_acl }
