@@ -969,4 +969,45 @@ def get_header(rule):
     # if more then complicated object name ...
     return header
 
+def group_cli_lines(cli_lines):
+    ''' Given a list of cli lines, whitespace and all, group them into the relevant object lines. '''
+    
+    cli_groups = []
+    current = 0
+    while current < len(cli_lines):
+        current_group = []
+        while current < len(cli_lines) and cli_lines[current].strip() != '!':
+            current_line = cli_lines[current].replace('"','').strip()
+            current_group.append(current_line)
+            current += 1
+        cli_groups.append(current_group)
+        current += 1
+    return cli_groups
+
+def make_object_from_cli_group(cli_group):
+    ''' Gather data from the group and return an object containing parameter: [data] entries. '''
+
+    header = cli_group[0].split(' ')[:-1]
+    header = join_words(header, ' ')
+    current_param = []
+    current_data = []
+    for cli_line in cli_group:
+        sanitized_line = cli_line.replace('"','').strip()
+        rule = match_cli_output_to_rule(header, sanitized_line)
+        extracted = extract_information_from_rule(rule, sanitized_line)
+        for pair in extracted:
+            if pair[0] in current_param:
+                pair_index = current_param.index(pair[0])
+                current_data[pair_index].append(pair[1])
+            else:
+                current_param.append(pair[0])
+                current_data.append([pair[1]])
+    current_object = {}
+    for param, data in zip(current_param,current_data):
+        if param in current_object:
+            current_object[param] += data
+        else:
+            current_object[param] = data
+    return [header, current_object]
+
 special_objects_dict = {'ip access-list session' : process_acl }
