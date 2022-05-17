@@ -100,3 +100,24 @@ def test_is_simple_returns_false_for_line_with_keyword_after_user_input():
     generated = aos6parser.is_simple_parameter(line)
     expected = False
     assert expected == generated
+
+def test_format_names_replaces_quoted_names_at_end_of_string():
+
+    line = 'description "Some Name"'
+    generated = aos6parser.format_names(line)
+    expected = 'description Some_Name'
+    assert expected == generated
+
+def test_format_names_replaces_quoted_names_not_at_end_of_string():
+
+    line = 'some value "this and that" other options'
+    generated = aos6parser.format_names(line)
+    expected = 'some value this_and_that other options'
+    assert expected == generated
+
+def test_format_names_replaces_multiple_quoted_names():
+
+    line = 'some value "this and that" other option "that and this" trailing'
+    generated = aos6parser.format_names(line)
+    expected = 'some value this_and_that other option that_and_this trailing'
+    assert expected == generated

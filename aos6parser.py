@@ -894,6 +894,9 @@ def extract_information_from_rule(rule, cli_line):
             header += f" {rule_words[rule_index]}"
             rule_index += 1
         else:
+            if header == first_word:
+                extracted_input_name = rule_words[rule_index].replace('<','').replace('>','')
+                header += f" {extracted_input_name}"
             data = cli_words[rule_index]
             if rule_index + 1 < len(cli_words):
                 rule_index += 1
@@ -987,21 +990,23 @@ def group_cli_lines(cli_lines):
 def make_object_from_cli_group(cli_group):
     ''' Gather data from the group and return an object containing parameter: [data] entries. '''
 
-    header = cli_group[0].split(' ')[:-1]
+    formatted_cli_group = format_names(cli_group[0].strip())
+    header = formatted_cli_group.split(' ')[:-1]
     header = join_words(header, ' ')
     current_param = []
     current_data = []
     for cli_line in cli_group:
-        sanitized_line = cli_line.replace('"','').strip()
+        sanitized_line = format_names(cli_line.strip())
         rule = match_cli_output_to_rule(header, sanitized_line)
-        extracted = extract_information_from_rule(rule, sanitized_line)
-        for pair in extracted:
-            if pair[0] in current_param:
-                pair_index = current_param.index(pair[0])
-                current_data[pair_index].append(pair[1])
-            else:
-                current_param.append(pair[0])
-                current_data.append([pair[1]])
+        if rule != '' and rule is not None:
+            extracted = extract_information_from_rule(rule, sanitized_line)
+            for pair in extracted:
+                if pair[0] in current_param:
+                    pair_index = current_param.index(pair[0])
+                    current_data[pair_index].append(pair[1])
+                else:
+                    current_param.append(pair[0])
+                    current_data.append([pair[1]])
     current_object = {}
     for param, data in zip(current_param,current_data):
         if param in current_object:
@@ -1009,5 +1014,32 @@ def make_object_from_cli_group(cli_group):
         else:
             current_object[param] = data
     return [header, current_object]
+
+def format_names(cli_line):
+    ''' Remove double quotes and join names found in double quotes with underscores replacing spaces. '''
+
+    cli_words = cli_line.split(' ')
+    replaced_name = ''
+    replaced_cli_line = cli_words[0]
+    index = 1
+    while index < len(cli_words):
+        if '"' in cli_words[index]:
+            replaced_name += cli_words[index].replace('"','')
+            index += 1
+            while index < len(cli_words):
+                if '"' in cli_words[index]:
+                    removed_quotes = cli_words[index].replace('"','')
+                    replaced_name += f"_{removed_quotes}"
+                    index += 1
+                    replaced_cli_line += f" {replaced_name}"
+                    replaced_name = ''
+                    break
+                else:
+                    replaced_name += f"_{cli_words[index]}"
+                    index += 1
+        else:
+            replaced_cli_line += f" {cli_words[index]}"
+            index += 1
+    return replaced_cli_line
 
 special_objects_dict = {'ip access-list session' : process_acl }
