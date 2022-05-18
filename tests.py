@@ -121,3 +121,17 @@ def test_format_names_replaces_multiple_quoted_names():
     generated = aos6parser.format_names(line)
     expected = 'some value this_and_that other option that_and_this trailing'
     assert expected == generated
+
+def test_calculate_column_letters_returns_single_letter_correctly():
+
+    column_index = 23
+    generated = aos6parser.calculate_column_letters(column_index)
+    expected = 'X'
+    assert expected == generated
+
+def test_calculate_column_letters_returns_double_letters_correctly():
+
+    column_index = 100
+    generated = aos6parser.calculate_column_letters(column_index)
+    expected = 'CV'
+    assert expected == generated

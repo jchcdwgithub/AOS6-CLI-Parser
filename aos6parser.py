@@ -4,6 +4,7 @@ from openpyxl.worksheet.table import Table
 from openpyxl.styles import PatternFill, Font
 from openpyxl.utils import get_column_letter
 import re
+import math
 
 cli_to_api_dict = {'ip access-list session' : 'Session ACL',
                    'user-role' : 'Role',
@@ -659,7 +660,7 @@ def write_tables_to_excel_worksheets(tables_arrays):
     workbook = Workbook()
     for group in grouped_tables:
         current_worksheet = workbook.create_sheet(title=group[0])
-        current_row = 1
+        current_row = 0
         for table in group[1]:
             table_name = table[0][0].replace(' ','_')
             current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
@@ -826,21 +827,22 @@ def write_to_excel(title, data, workbook, start):
     table = Table(displayName='SSID',ref=f'A{start}:F{start + len(data)}')
     current_ws.add_table(table)
 
-def add_table_to_worksheet(data,worksheet,table_name='',start=1):
+def add_table_to_worksheet(data,worksheet,table_name='',start=0):
     
-    title_row_color = 'C0504D'
-    cell_letter = [letter.upper() for letter in 'abcdefghijklmnopqrstuvwxyz']
-    end_cell_number = start + len(data) - 1
-    end_cell = cell_letter[len(data[0])-1]
+    #title_row_color = 'C0504D'
+    end_cell_number = len(data)
+    end_cell = calculate_column_letters(start + len(data[0])-1) + str(end_cell_number)
+    start_cell = calculate_column_letters(start) + '1'
     num_columns = len(data[0])
 
-    current = start
+    current = 1 
     data_index = 0
     while current <= end_cell_number:
-        current_column = 0
+        current_column = start
         current_row_cells = []
-        while current_column < num_columns:
-            current_row_cells.append(worksheet[f'{cell_letter[current_column]}{current}'])
+        while current_column < start + num_columns:
+            current_column_letters = calculate_column_letters(current_column)
+            current_row_cells.append(worksheet[f'{current_column_letters}{current}'])
             current_column += 1
         current_data_row = data[data_index]
         for cell,data_value in zip(current_row_cells,current_data_row):
@@ -848,36 +850,53 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=1):
         current += 1
         data_index += 1 
 
-    colors = ['E6B8B7', 'F2DCDB']
-    color_index = 0
-    rows = worksheet[start:end_cell_number]
-    for row in rows:
-        if color_index == 0:
-            for cell in row:
-                cell.fill = PatternFill('solid', fgColor = title_row_color)
-                cell.font = Font(color='FFFFFF')
-        else:
-            for cell in row:
-                cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
-                cell.font = Font(color='000000')
-        color_index += 1
+    #colors = ['E6B8B7', 'F2DCDB']
+    #color_index = 0
+    #rows = worksheet[start_cell:end_cell]
+    #for row in rows:
+    #   if color_index == 0:
+    #      for cell in row:
+    #           cell.fill = PatternFill('solid', fgColor = title_row_color)
+    #           cell.font = Font(color='FFFFFF')
+    #   else:
+    #        for cell in row:
+    #           cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
+    #           cell.font = Font(color='000000')
+    #   color_index += 1
     
-    column_widths = []
-    for row in data:
-        for i, cell in enumerate(row):
-            if len(column_widths) > i:
-                if len(cell) > column_widths[i]:
-                    column_widths[i] = len(cell)
-            else:
-                column_widths += [len(cell)]
+    #column_widths = []
+    #for row in data:
+    #   for i, cell in enumerate(row):
+    #       if len(column_widths) > i:
+    #           if len(cell) > column_widths[i]:
+    #               column_widths[i] = len(cell)
+    #       else:
+    #           column_widths += [len(cell)]
     
-    for i, column_width in enumerate(column_widths,1):  
-        worksheet.column_dimensions[get_column_letter(i)].width = column_width + 5
+    #for i, column_width in enumerate(column_widths,1):  
+    #   worksheet.column_dimensions[get_column_letter(i)].width = column_width + 5
 
-    table = Table(displayName=table_name,ref=f'A{start}:{end_cell}{end_cell_number}')
+    table = Table(displayName=table_name,ref=f'{start_cell}:{end_cell}')
     worksheet.add_table(table)
-    return end_cell_number + 2
+    return start + len(data[0]) + 1
 
+def calculate_column_letters(column_index):
+    ''' Given a column index, return the corresponding excel column letter. '''
+
+    column_letters = [letter.upper() for letter in 'abcdefghijklmnopqrstuvwxyz']
+
+    if column_index < 26:
+        return column_letters[column_index]
+    else:
+        first_letter_index = math.floor(column_index/26) - 1
+        last_letter_index = column_index%26 - 1
+
+        first_letter = column_letters[first_letter_index]
+        last_letter = column_letters[last_letter_index]
+
+        column = first_letter + last_letter
+        return column
+            
 def extract_information_from_rule(rule, cli_line):
     ''' Given a rule, return a list of tuples with the rule_header and associated data. '''
     
@@ -894,7 +913,7 @@ def extract_information_from_rule(rule, cli_line):
             header += f" {rule_words[rule_index]}"
             rule_index += 1
         else:
-            if header == first_word:
+            if header == first_word and len(pair_list) != 0:
                 extracted_input_name = rule_words[rule_index].replace('<','').replace('>','')
                 header += f" {extracted_input_name}"
             data = cli_words[rule_index]
@@ -980,7 +999,7 @@ def group_cli_lines(cli_lines):
     while current < len(cli_lines):
         current_group = []
         while current < len(cli_lines) and cli_lines[current].strip() != '!':
-            current_line = cli_lines[current].replace('"','').strip()
+            current_line = format_names(cli_lines[current].strip())
             current_group.append(current_line)
             current += 1
         cli_groups.append(current_group)
@@ -990,13 +1009,13 @@ def group_cli_lines(cli_lines):
 def make_object_from_cli_group(cli_group):
     ''' Gather data from the group and return an object containing parameter: [data] entries. '''
 
-    formatted_cli_group = format_names(cli_group[0].strip())
+    formatted_cli_group = format_names(cli_group[0])
     header = formatted_cli_group.split(' ')[:-1]
     header = join_words(header, ' ')
     current_param = []
     current_data = []
     for cli_line in cli_group:
-        sanitized_line = format_names(cli_line.strip())
+        sanitized_line = format_names(cli_line)
         rule = match_cli_output_to_rule(header, sanitized_line)
         if rule != '' and rule is not None:
             extracted = extract_information_from_rule(rule, sanitized_line)
@@ -1026,6 +1045,8 @@ def format_names(cli_line):
         if '"' in cli_words[index]:
             replaced_name += cli_words[index].replace('"','')
             index += 1
+            if index == len(cli_words):
+                replaced_cli_line += f" {replaced_name}"
             while index < len(cli_words):
                 if '"' in cli_words[index]:
                     removed_quotes = cli_words[index].replace('"','')
@@ -1041,5 +1062,21 @@ def format_names(cli_line):
             replaced_cli_line += f" {cli_words[index]}"
             index += 1
     return replaced_cli_line
+
+def make_cli_objects(cli_file):
+    ''' Parses the cli_file and returns a dictionary of key to value entries based on the cli outputs. '''
+
+    with open(cli_file) as f:
+        lines = f.readlines()
+        cli_groups = group_cli_lines(lines)
+        cli_objects = {}
+        for cli_group in cli_groups:
+            header, current_object = make_object_from_cli_group(cli_group)
+            if header in cli_objects:
+                cli_objects[header].append(current_object)
+            else:
+                if current_object != {}:
+                    cli_objects[header] = [current_object]
+        return cli_objects
 
 special_objects_dict = {'ip access-list session' : process_acl }
