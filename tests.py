@@ -135,3 +135,26 @@ def test_calculate_column_letters_returns_double_letters_correctly():
     generated = aos6parser.calculate_column_letters(column_index)
     expected = 'CV'
     assert expected == generated
+
+def test_swap_rows_cols_swaps_correctly():
+
+    original_array = [['this','that', 'tother'],['those','thot', 'tsther'],['me','my','moo']]
+    expected = [['this','those','me'],['that','thot','my'],['tother','tsther','moo']]
+    generated = aos6parser.swap_rows_and_columns(original_array)
+    assert expected == generated
+
+def test_get_column_widths_returns_widest_widths_for_simple_matrix():
+
+    matrix = [['this','those','thematic']]
+    start = 5
+    expected = {'E':4,'F':5,'G':8}
+    generated = aos6parser.get_widest_column_widths(start,matrix)
+    assert expected == generated
+
+def test_get_column_widths_returns_widest_widths_for_complex_matrix():
+
+    matrix = [['this','that','those'],['expeditious','annoyingly','prophetic'],['soporific','scrumptious','fun']]
+    start = 10
+    expected = {'J':11,'K':11,'L':9}
+    generated = aos6parser.get_widest_column_widths(start,matrix)
+    assert expected == generated

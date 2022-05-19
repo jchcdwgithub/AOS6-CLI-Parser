@@ -658,13 +658,19 @@ def build_tables_arrays(attributes_array):
 def write_tables_to_excel_worksheets(tables_arrays):
     grouped_tables = group_tables(tables_arrays)
     workbook = Workbook()
+    first_worksheet = True
     for group in grouped_tables:
-        current_worksheet = workbook.create_sheet(title=group[0])
+        if first_worksheet:
+            current_worksheet = workbook.active
+            current_worksheet.title = group[0]
+            first_worksheet = False
+        else:
+            current_worksheet = workbook.create_sheet(title=group[0])
         current_row = 0
         for table in group[1]:
             table_name = table[0][0].replace(' ','_')
             current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
-    workbook.save('aos6_cli_output.xlsx')
+        workbook.save('aos6_cli_output.xlsx')
 
 def group_tables(tables_arrays):
     grouped_tables = {}
@@ -829,7 +835,6 @@ def write_to_excel(title, data, workbook, start):
 
 def add_table_to_worksheet(data,worksheet,table_name='',start=0):
     
-    #title_row_color = 'C0504D'
     end_cell_number = len(data)
     end_cell = calculate_column_letters(start + len(data[0])-1) + str(end_cell_number)
     start_cell = calculate_column_letters(start) + '1'
@@ -850,35 +855,67 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=0):
         current += 1
         data_index += 1 
 
-    #colors = ['E6B8B7', 'F2DCDB']
-    #color_index = 0
-    #rows = worksheet[start_cell:end_cell]
-    #for row in rows:
-    #   if color_index == 0:
-    #      for cell in row:
-    #           cell.fill = PatternFill('solid', fgColor = title_row_color)
-    #           cell.font = Font(color='FFFFFF')
-    #   else:
-    #        for cell in row:
-    #           cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
-    #           cell.font = Font(color='000000')
-    #   color_index += 1
-    
-    #column_widths = []
-    #for row in data:
-    #   for i, cell in enumerate(row):
-    #       if len(column_widths) > i:
-    #           if len(cell) > column_widths[i]:
-    #               column_widths[i] = len(cell)
-    #       else:
-    #           column_widths += [len(cell)]
-    
-    #for i, column_width in enumerate(column_widths,1):  
-    #   worksheet.column_dimensions[get_column_letter(i)].width = column_width + 5
+    add_color_scheme(worksheet,start_cell,end_cell)
+    column_widths = get_widest_column_widths(start,data)
+    adjust_column_widths(worksheet,column_widths)
 
-    table = Table(displayName=table_name,ref=f'{start_cell}:{end_cell}')
-    worksheet.add_table(table)
     return start + len(data[0]) + 1
+
+def adjust_column_widths(worksheet,column_widths):
+    ''' Adjust the column widths of the table in the worksheet based on the dictionary passed. '''
+
+    for column_letter in column_widths:
+        worksheet.column_dimensions[column_letter].width = column_widths[column_letter] + 5
+
+def add_color_scheme(worksheet,start_cell,end_cell):
+    ''' Add a red table color scheme to the cells in the worksheet. '''
+    title_row_color = 'C0504D'
+    colors = ['E6B8B7', 'F2DCDB']
+    color_index = 0
+    rows = worksheet[start_cell:end_cell]
+    for row in rows:
+       if color_index == 0:
+          for cell in row:
+               cell.fill = PatternFill('solid', fgColor = title_row_color)
+               cell.font = Font(color='FFFFFF')
+       else:
+            for cell in row:
+               cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
+               cell.font = Font(color='000000')
+       color_index += 1
+
+def get_widest_column_widths(start,data):
+    ''' Returns a dictionary of column letter to widest length of data found in each column. '''
+    column_widths = {}
+    columns_table = swap_rows_and_columns(data)
+    column_index = start
+    for column in columns_table:
+        column_letter = calculate_column_letters(column_index)
+        current_longest_len = 0
+        for cell in column:
+            if len(cell) > current_longest_len:
+                column_widths[column_letter] = len(cell)
+                current_longest_len = len(cell)
+        column_index += 1
+    return column_widths
+
+def swap_rows_and_columns(data):
+    ''' Given an array of arrays, swap the rows and columns data. '''
+
+    num_rows = len(data)
+    swapped_matrix = []
+    num_cols = len(data[0])
+    current_col = 0
+    while current_col < num_cols:
+        current_row = 0
+        current_col_array = []
+        while current_row < num_rows:
+            current_col_array.append(data[current_row][current_col])
+            current_row += 1
+        current_col += 1
+        swapped_matrix.append(current_col_array)
+
+    return swapped_matrix
 
 def calculate_column_letters(column_index):
     ''' Given a column index, return the corresponding excel column letter. '''
