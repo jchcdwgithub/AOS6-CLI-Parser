@@ -1036,12 +1036,37 @@ def group_cli_lines(cli_lines):
     while current < len(cli_lines):
         current_group = []
         while current < len(cli_lines) and cli_lines[current].strip() != '!':
-            current_line = format_names(cli_lines[current].strip())
-            current_group.append(current_line)
+            current_line = check_special_line(format_names(cli_lines[current].strip()))
+            if current_line != '':
+                current_group.append(current_line)
             current += 1
         cli_groups.append(current_group)
         current += 1
     return cli_groups
+
+def check_special_line(cli_line):
+    ''' Certain cli lines need to be specially pre-processed before returning. '''
+    
+    special_lines = {'a-basic-rates':group_rates,'g-basic-rates':group_rates, 'a-tx-rates':group_rates, 'g-tx-rates':group_rates}
+    if cli_line == '':
+        return ''
+    else:
+        cli_words = cli_line.split(' ')
+        cli_title = cli_words[0] 
+        if cli_title in special_lines:
+            return special_lines[cli_title](cli_line)
+        else:
+            return cli_line
+
+def group_rates(special_line):
+    ''' Rates are comma separated numeric values on the CLI. Group them into a comma separated list and return the new line. '''
+
+    cli_words = special_line.split(' ')
+    cli_title = cli_words[0]
+    current_rates = cli_words[1]
+    for rate in cli_words[2:]:
+        current_rates += f",{rate}"
+    return join_words([cli_title,current_rates],' ')
 
 def make_object_from_cli_group(cli_group):
     ''' Gather data from the group and return an object containing parameter: [data] entries. '''

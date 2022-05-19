@@ -158,3 +158,10 @@ def test_get_column_widths_returns_widest_widths_for_complex_matrix():
     expected = {'J':11,'K':11,'L':9}
     generated = aos6parser.get_widest_column_widths(start,matrix)
     assert expected == generated
+
+def test_group_rates_returns_correct_cli_line():
+
+    cli_line = 'a-tx-rates 12 24 36'
+    expected = 'a-tx-rates 12,24,36'
+    generated = aos6parser.group_rates(cli_line)
+    assert expected == generated
