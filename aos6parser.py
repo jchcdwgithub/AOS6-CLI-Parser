@@ -397,6 +397,8 @@ def split_object_identifier(words_list, start):
     return join_words(object_id, '_')
 
 def join_words(word_list, seperator):
+    if len(word_list) == 0:
+        return ''
     joined_words = word_list[0]
     for word in word_list[1:]:
         joined_words += seperator + word
@@ -655,7 +657,7 @@ def build_tables_arrays(attributes_array):
         tables_arrays.append(transform_attribute_array_to_array_tables(object_name,object))
     return tables_arrays
 
-def write_tables_to_excel_worksheets(tables_arrays):
+def write_tables_to_excel_worksheets(tables_arrays,output_file):
     grouped_tables = group_tables(tables_arrays)
     workbook = Workbook()
     first_worksheet = True
@@ -670,7 +672,7 @@ def write_tables_to_excel_worksheets(tables_arrays):
         for table in group[1]:
             table_name = table[0][0].replace(' ','_')
             current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
-        workbook.save('aos6_cli_output.xlsx')
+        workbook.save(output_file)
 
 def group_tables(tables_arrays):
     grouped_tables = {}
@@ -995,10 +997,10 @@ def match_cli_output_to_rule(object_name, cli_output):
                 break
         return correct_rule
 
-def populate_cli_rules():
+def populate_cli_rules(template_file):
     ''' Read from the expanded cli commands and load the rules into the aos6_cli_rules dictionary. '''
 
-    with open('more_cli_commands.txt') as cli_txt_rules:
+    with open(template_file) as cli_txt_rules:
         rules_lines = cli_txt_rules.readlines()
         current_index = 0
         while current_index < len(rules_lines):
@@ -1133,12 +1135,13 @@ def make_cli_objects(cli_file):
         cli_groups = group_cli_lines(lines)
         cli_objects = {}
         for cli_group in cli_groups:
-            header, current_object = make_object_from_cli_group(cli_group)
-            if header in cli_objects:
-                cli_objects[header].append(current_object)
-            else:
-                if current_object != {}:
-                    cli_objects[header] = [current_object]
+            if len(cli_group) > 0:
+                header, current_object = make_object_from_cli_group(cli_group)
+                if header in cli_objects:
+                    cli_objects[header].append(current_object)
+                else:
+                    if current_object != {}:
+                        cli_objects[header] = [current_object]
         return cli_objects
 
 special_objects_dict = {'ip access-list session' : process_acl }

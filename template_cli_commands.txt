@@ -1,0 +1,685 @@
+aaa authentication-server radius <rad_server_name>
+acctport <port>
+authport <port>
+called-station-id type <type> delimiter <delimiter> include-ssid <choice>
+clone <server>
+cppm username <username>
+cppm password <password>
+host <host>
+key <psk>
+mac-delimiter <input>
+nas-identifier <string>
+nas-ip <ipaddr>
+nas-ip6 <ipv6-adrress>
+radsec-client-cert-name <name>
+radsec-port <radsec-port>
+radsec-trusted-cacert-name <radsec-trusted-ca>
+radsec-trusted-servercert-name <name>
+retransmit <number>
+source-interface vlan <vlan>
+source-interface ip6addr <ipv6addr>
+timeout <seconds>
+!
+aaa server-group <group>
+auth-server <name> match-option match-fqdn <string> position <number> trim-fqdn
+clone <group>
+set value <attribute> option <string> set-value <set-value-str> position <number>
+!
+aaa profile <profile>
+authentication-dot1x <dot1x-profile>
+authentication-mac <mac-profile>
+clone <profile>
+dot1x-default-role <role>
+dot1x-server-group <group>
+initial-role <role>
+mac-default-role <role>
+mac-server-group <group>
+max-ip ipv4 wireless <max_ipv4_users>
+open ssid radius accounting
+radius-accounting <group>
+rfc-3576-server <ipaddr>
+sip-authentication-role <role>
+user-derivation-rules <profile>
+xml-api-server <ipaddr>
+!
+aaa authentication mac <profile>
+case <case>
+clone <profile>
+delimiter <delimiter>
+max-authentication-failures <number>
+timer reauth period <reauth>
+!
+aaa rfc-3576-server <ipaddr>
+clone <source>
+key <psk>
+!
+ap regulatory-domain-profile <profile>
+clone <profile>
+country-code <code>
+valid-11a-40mhz-channel-pair <valid-11a-40mhz-channel-pair>
+valid-11a-80mhz-channel-group <valid-11a-80mhz-channel-group>
+valid-11a-channel <num>
+valid-11g-40mhz-channel-pair <valid-11g-40mhz-channel-pair>
+valid-11g-channel <num>
+!
+ap system-profile <profile>
+ap-console-password <pw>
+aeroscout-rtls-server ip-or-dns <ipaddr-or-dns> port <port> include-unassoc-sta <include>
+am-scan-rf-band <scanning>
+bkup-band <band>
+bkup-lms-ip <ipaddr>
+bkup-lms-ipv6 <ipaddr>
+bkup-mode <mode>
+bkup-passwords <password>
+ble-op-mode <mode>
+ble-token <string>
+ble-url <url>
+bootstrap-threshold <number>
+clone <profile>
+dns-domain <domain>
+dump-server <server>
+heartbeat-dscp <number>
+heartbeat-in <secs>
+led-mode off
+lms-hold-down-period <seconds>
+lms-ip <ipaddr>
+lms-ipv6 <ipaddr>
+max-request-retries <number>
+mcast-aggr-allowed-vlan <vlan-list>
+mtu <bytes>
+native-vlan-id <vlan>
+rap-dhcp-default-router <ipaddr>
+rap-dhcp-dns-server <ipaddr>
+rap-dhcp-lease <days>
+rap-dhcp-pool-end <ipaddr>
+rap-dhcp-pool-netmask <netmask>
+rap-dhcp-pool-start <ipaddr>
+rap-dhcp-server-id <ipaddr>
+rap-dhcp-server-vlan <vlan>
+request-retry-interval <seconds>
+rf-band <band>
+rtls-server ip-or-dns <ipaddr-ordns> port <port> key <key> station-message-frequency <seconds> include-unassoc-sta
+session-acl <acl>
+shell-passwd <password>
+syscontact <name>
+!
+ap-group <group>
+ap-system-profile <profile>
+authorization-profile <profile>
+clone <profile>
+dot11a-radio-profile <profile>
+dot11a-traffic-mgmt-profile <profile>
+dot11g-radio-profile <profile>
+dot11g-traffic-mgmt-profile <profile>
+enet0-port-profile <profile>
+enet1-port-profile <profile>
+enet2-port-profile <profile>
+enet3-port-profile <profile>
+enet4-port-profile <profile>
+event-thresholds-profile <profile>
+ids-profile <profile>
+mesh-cluster-profile <profile> priority <priority>
+mesh-radio-profile <profile>
+regulatory-domain-profile <profile>
+rf-optimization-profile <profile>
+virtual-ap <profile>
+voip-cac-profile <profile>
+!
+interface loopback <loopback>
+ip address <ipaddr> <subnet>
+ipv6 address <ipv6-prefix>
+!
+ip dhcp pool <name>
+default-router <ipaddr>
+dns-server <ipaddr>
+domain-name <name>
+lease <days> <hours> <minutes>
+netbios-name-server <option>
+network <ipaddr> <netmask>
+option <code> ip <ipaddr>
+pooltype <pooltype>
+!
+ip name-server <ipaddr>
+master-redundancy peer-ip <ipaddr>
+ipsec <key>
+ipsec-custom-cert master-mac <mac> ca-cert <ca> server-cert <cert> <optional>
+ipsec-factory-cert master-mac <mac>
+!
+aaa authentication captive-portal <profile>
+auth-protocol <prot>
+black-list <black-list>
+clone <source-profile>
+default-guest-role <role>
+default-role <role>
+ip-addr-in-redirection <ipaddr>
+login-page <url>
+max-authentication-failures <number>
+redirect-pause <seconds>
+redirect-url <url>
+server-group <group-name>
+switchip-in-redirection-url <ipaddr>
+url-hash-key <key>
+user-vlan-in-redirection-url <vlan>
+welcome-page <url>
+white-list <white-list>
+!
+aaa authentication dot1x <profile>
+ca-cert <certificate>
+clone <profile>
+framed-mtu <mtu>
+heldstate-bypass-counter <number>
+max-authentication-failures <number>
+max-requests <number>
+reauth-max <number>
+server-cert <certificate>
+tls-guest-role <role>
+wep-key-retries <number>
+wep-key-size <size>
+wpa-key-retries <number>
+xSec-mtu <mtu>
+!
+interface fastethernet <slot>/<module>/<port>
+bandwidth-contract <name>
+bandwidth-contract app <app-name> <bw-contract-name> upstream
+bandwidth-contract app <app-name> <bw-contract-name> upstream exclude
+bandwidth-contract app <app-name> <bw-contract-name> downstream
+bandwidth-contract app <app-name> <bw-contract-name> downstream exclude
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> upstream
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> upstream exclude
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> downstream
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> downstream exclude
+description <string>
+duplex <duplex>
+lacp <lacp>
+port monitor fastethernet <slot>/<port>
+port monitor gigabitethernet <slot>/<port>
+priority-map <name>
+speed <speed>
+switchport access vlan <vlan>
+switchport mode access
+switchport mode trunk
+switchport trunk allowed vlan except <vlans>
+switchport trunk allowed vlan all
+switchport trunk allowed vlan add <vlans>
+switchport trunk allowed vlan <vlans>
+switchport trunk allowed vlan remove <vlans>
+switchport trunk native vlan <vlan>
+trusted vlan <word>
+!
+interface gigabitethernet <slot>/<module>/<port>
+bandwidth-contract <name>
+bandwidth-contract app <app-name> <bw-contract-name> upstream
+bandwidth-contract app <app-name> <bw-contract-name> upstream exclude
+bandwidth-contract app <app-name> <bw-contract-name> downstream
+bandwidth-contract app <app-name> <bw-contract-name> downstream exclude
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> upstream
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> upstream exclude
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> downstream
+bandwidth-contract appcategory <app-category-name> <bw-contract-name> downstream exclude
+description <string>
+duplex <duplex>
+lacp <lacp>
+port monitor fastethernet <slot>/<port>
+port monitor gigabitethernet <slot>/<port>
+priority-map <name>
+speed <speed>
+switchport access vlan <vlan>
+switchport mode access
+switchport mode trunk
+switchport trunk allowed vlan except <vlans>
+switchport trunk allowed vlan all
+switchport trunk allowed vlan add <vlans>
+switchport trunk allowed vlan <vlans>
+switchport trunk allowed vlan remove <vlans>
+switchport trunk native vlan <vlan>
+trusted vlan <word>
+!
+interface vlan <vlan>
+bandwidth-contract <name>
+description <string>
+ip local-proxy-arp
+ip helper-address <address>
+ip access-group <name> in
+ip internal
+ip dhcp-client client-id <cid>
+ip address <ipaddr> <subnet>
+ip pppoe
+ip igmp
+ip igmp local-proxy-arp
+ip igmp nat
+ip igmp nat inside
+ip igmp proxy
+ip igmp snooping
+ip igmp proxy snooping
+ipv6 <ipv6-prefix>/<prefix-length>
+ipv6 address <ipv6-address> link-local
+ipv6
+ipv6 eui-64
+ipv6 dhcp server <pool name>
+ipv6 mld snooping
+ipv6 proxy gigabitethernet <slot>/<port>
+ipv6 proxy fastethernet <slot>/<port>
+ipv6 proxy port-channel <slot>/<port>
+ipv6 nd reachable-time <value>
+ipv6 nd preference
+ipv6 nd other-config-flag
+ipv6 nd mtu
+ipv6 nd managed-config-flag
+ipv6 nd life-time
+ipv6 nd interval
+ipv6 nd hop-limit
+ipv6 nd enable
+ipv6 nd ra dns
+ipv6 nd ra reachable-time <value>
+ipv6 nd ra
+ipv6 nd ra retransmit-time <value>
+ipv6 nd prefix
+ipv6 nd retransmit-time <value>
+mtu <number>
+multimode-auth lease-time
+operstate up
+!
+master-redundancy master-vrrp <id>
+masterip <ipaddr>
+ipsec <key> interface uplink
+ipsec <key>
+ipsec <key> fqdn <fqdn>
+ipsec vlan <id>
+ipsec vlan <id> fqdn <fqdn>
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2> ca-cert <ca> server-cert <cert> interface uplink
+ipsec-custom-cert master-mac1 <mac1> ca-cert <ca> server-cert <cert> interface uplink
+ipsec-custom-cert master-mac1 <mac1> ca-cert <ca> server-cert <cert> suite‑b gcm-128
+ipsec-custom-cert master-mac1 <mac1> ca-cert <ca> server-cert <cert> suite‑b gcm-256
+ipsec-custom-cert master-mac1 <mac1> ca-cert <ca> server-cert <cert> fqdn <fqdn>
+ipsec-custom-cert master-mac1 <mac1> ca-cert <ca> server-cert <cert> fqdn <fqdn> suite‑b gcm-128
+ipsec-custom-cert master-mac1 <mac1> ca-cert <ca> server-cert <cert> fqdn <fqdn> suite‑b gcm-256
+ipsec-custom-cert master-mac1 <mac1> vlan <id>
+ipsec-custom-cert master-mac1 <mac1> vlan <id> suite‑b gcm-128
+ipsec-custom-cert master-mac1 <mac1> vlan <id> suite‑b gcm-256
+ipsec-custom-cert master-mac1 <mac1> vlan <id> fqdn <fqdn>
+ipsec-custom-cert master-mac1 <mac1> vlan <id> fqdn <fqdn> suite‑b gcm-128
+ipsec-custom-cert master-mac1 <mac1> vlan <id> fqdn <fqdn> suite‑b gcm-256
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2>
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2> ca-cert <ca> server-cert <cert>
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2> ca-cert <ca> server-cert <cert> suite‑b gcm-128
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2> ca-cert <ca> server-cert <cert> suite‑b gcm-256
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2> ca-cert <ca> server-cert <cert> fqdn <fqdn>
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2> ca-cert <ca> server-cert <cert> fqdn <fqdn> suite‑b gcm-128
+ipsec-custom-cert master-mac1 <mac1> master-mac2 <mac2> ca-cert <ca> server-cert <cert> fqdn <fqdn> suite‑b gcm-256
+ipsec-custom-cert vlan <id>
+ipsec-custom-cert vlan <id> suite‑b gcm-128
+ipsec-custom-cert vlan <id> suite‑b gcm-256
+ipsec-custom-cert vlan <id> fqdn <fqdn>
+ipsec-custom-cert vlan <id> fqdn <fqdn> suite‑b gcm-128
+ipsec-custom-cert vlan <id> fqdn <fqdn> suite‑b gcm-256
+ipsec-factory-cert master-mac1 <mac1> master-mac2 <mac2> interface uplink
+ipsec-factory-cert master-mac1 <mac1> interface uplink
+ipsec-factory-cert master-mac1 <mac1>
+ipsec-factory-cert master-mac1 <mac1> fqdn <fqdn>
+ipsec-factory-cert master-mac1 <mac1> vlan <id>
+ipsec-factory-cert master-mac1 <mac1> vlan <id> fqdn <fqdn>
+ipsec-factory-cert master-mac1 <mac1> master-mac2 <mac2>
+ipsec-factory-cert master-mac1 <mac1> master-mac2 <mac2> fqdn <fqdn>
+ipsec-factory-cert vlan <id>
+ipsec-factory-cert vlan <id> fqdn <fqdn>
+!
+netdestination <name>
+description <description6>
+host <ipaddr>
+host <ipaddr> position <number>
+name <host_name>
+network <ipaddr> <netmask>
+network <ipaddr> <netmask> position <number>
+range <start-ipaddr> <end-ipaddr>
+range <start-ipaddr> <end-ipaddr> position <number>
+!
+ntp server <IPv4/IPv6 Address>
+!
+rf am-scan-profile <profile-name>
+clone <profile>
+!
+rf arm-profile <profile>
+40MHz-allowed-bands <allowed>
+80MHz support
+acceptable-coverage-index <number>
+aggressive-scan
+assignment <assignment>
+backoff-time <seconds> 
+cellular-handoff-assist
+channel-quality-aware-arm 
+channel-quality-threshold <channel-quality-threshold>
+channel-quality-wait-time <seconds>
+client-aware 
+client-match 
+clone <profile> 
+cm-band-a-min-signal <cm-band-a-min-signal>
+cm-band-g-max-signal <cm-band-g-max-signal>
+cm-dot11v
+cm-lb-client-thresh <#-of-clients>
+cm-lb-signal-delta <cm-lb-signal-delta>
+cm-lb-snr-thresh <dB>
+cm-lb-thresh <%-of-clients>
+cm-max-steer-fails <#-of-fails>
+cm-mu-client-thresh <count>
+cm-mu-snr-thresh <value>
+cm-report-interval <int>
+cm-stale-age <secs>
+cm-steer-timeout <secs>
+cm-sticky-check_intvl <secs>
+cm-sticky-min-signal <-dB>
+cm-sticky-snr <dB>
+cm-sticky-snr-delta <delta>
+cm-update-interval <dB>
+cm-unst-ageout-interval days <days> hours <hours>
+error-rate-threshold <percent> 
+error-rate-wait-time <seconds> 
+free-channel-index <number> 
+ideal-coverage-index <number> 
+load-aware-scan-threshold <threshold>
+max-tx-power <dBm> 
+min-scan-time <#scans>
+min-tx-power <dBm> 
+mode-aware 
+multi-band-scan 
+ota-updates
+ps-aware-scan
+rogue-ap-aware 
+scan mode <mode>
+scan-interval
+scanning 
+video-aware-scan
+voip-aware-scan 
+!
+rf dot11a-radio-profile <profile>
+am-scan-profile <profile-name>
+arm-profile <profile>
+beacon-period <milliseconds>
+cap-reg-eirp <cap-reg-eirp>
+cell-size-reduction <cell-size-reduction>
+channel <num>
+channel-reuse <reuse>
+clone <profile>
+csa-count <number>
+ht-radio-profile <profile>
+maximum-distance <maximum-distance>
+mgmt-frame-throttle-interval <seconds>
+mgmt-frame-throttle-limit <number>
+mode <mode>
+slb-mode radio
+slb-update-interval <secs>
+spectrum-profile <profile>
+spur-immunity <spur-immunity>
+tpc-power <tpc-power>
+tx-power <dBm>
+!
+rf dot11g-radio-profile <profile>
+am-scan-profile <profile-name>
+arm-profile <profile>
+beacon-period <milliseconds>
+cap-reg-eirp <cap-reg-eirp>
+cell-size-reduction <cell-size-reduction>
+channel <num>
+channel-reuse <reuse>
+clone <profile>
+csa-count <number>
+ht-radio-profile <profile>
+maximum-distance <maximum-distance>
+mgmt-frame-throttle-interval <seconds>
+mgmt-frame-throttle-limit <number>
+mode <mode>
+slb-mode <mode>
+slb-update-interval <secs>
+tpc-power <tpc-power>
+tx-power <dBm>
+!
+rf ht-radio-profile <profile>
+clone <profile>
+!
+snmp-server <server>
+community <string>
+enable trap
+host 2c
+host <IPv4/IPv6 Address>
+host version 1 <name> udp-port <port>
+host 3 <name>
+inform queue-length <size>
+source controller-ip
+trap disable <trap>
+trap enable <trap>
+user <name> priv-prot AES <password>
+user <name> priv-prot DES <password>
+user <name> auth-prot md5 <password> priv-prot AES <password>
+user <name> auth-prot md5 <password> priv-prot DES <password>
+user <name> auth-prot sha <password> priv-prot AES <password>
+user <name> auth-prot sha <password> priv-prot DES <password>
+!
+user-role <name>
+access-list mac <acl>
+access-list mac <acl> position <number>
+access-list mac <acl> ap-group <group>
+access-list mac <acl> ap-group <group> position <number>
+access-list eth <acl>
+access-list eth <acl> position <number>
+access-list eth <acl> ap-group <group>
+access-list eth <acl> ap-group <group> position <number>
+access-list session <acl>
+access-list session <acl> position <number>
+access-list session <acl> ap-group <group>
+access-list session <acl> ap-group <group> position <number>
+bw-contract <name>
+bw-contract <name> per-user
+bw-contract app downstream
+bw-contract app upstream
+bw-contract appcategory downstream
+bw-contract appcategory upstream
+bw-contract upstream
+dialer <name>
+max-sessions <number>
+policer-profile <profile>
+pool l2tp <name>
+pool pptp <name>
+qos-profile <profile>
+reauthentication-interval <minutes>
+reauthentication-interval
+reauthentication-interval <seconds>
+session-acl <string>
+session-acl <string> position <number>
+session-acl <string> ap-group <group>
+session-acl <string> ap-group <group> position <number>
+sso <profile>
+stateful-kerberos <profile>
+stateful-ntlm <ntlm_profile_name>
+traffic-control-profile <STRING>
+via <profile>
+voip-profile <profile>
+web-cc disable
+wispr <wispr_profile_name>
+!
+vlan <id>
+!
+vlan <id> wired aaa-profile <profile>
+!
+vlan range <range>
+!
+vlan <id> <name> <vlan-ids>
+!
+vlan <id> <description>
+!
+vlan wired aaa-profile <profile>
+!
+vlan range <range>
+!
+vlan <name> <vlan-ids>
+!
+vlan-name <name> assignment <assignment> 
+!
+vrrp <id>
+advertise <interval>
+authentication <password>
+description <text>
+holdtime <secs>
+ip address <ipaddr> <subnet>
+priority <level>
+tracking interface fastethernet <slot>/<port>
+tracking interface gigabitethernet <slot>/<port>
+tracking master-up-time <duration> add <value>
+tracking vrrp-master-state <vrid> add <value>
+vlan <vlanid>
+!
+whitelist-db rap add mac-addr <mac-address>
+ap-group <ap-group>
+ap-name <ap-name>
+description <description>
+full-name <full-name>
+mode disable
+remote-ip <ip-addr>
+!
+wlan ht-ssid-profile <profile-name>
+clone <profile-name>
+max-rx-a-mpdu-size <size>
+max-tx-a-mpdu-size <bytes>
+max-tx-a-msdu-count-be <count>
+max-tx-a-msdu-count-bk <count>
+max-tx-a-msdu-count-vi <count>
+max-tx-a-msdu-count-vo <count>
+min-mpdu-start-spacing <space>
+supported-mcs-set <mcs-list>
+!
+wlan ssid-profile <profile-name>
+a-basic-rates <mbps>
+a-tx-rates <mbps>
+ageout <seconds>
+auth-req-thresh <auth-req-thresh>
+clone <profile-name>
+dtim-period <milliseconds>
+edca-parameters-profile ap <profile-name>
+edca-parameters-profile station <profile-name>
+essid <name>
+g-basic-rates <mbps>
+g-tx-rates <mbps>
+ht-ssid-profile <profile-name>
+max-clients <number>
+max-retries <number>
+max-tx-fail <number>
+opmode <opmode>
+rts-threshold <number>
+wepkey1 <key>
+wepkey2 <key>
+wepkey3 <key>
+wepkey4 <key>
+weptxkey <index>
+wmm-be-dscp <best-effort>
+wmm-bk-dscp <background>
+wmm-ts-min-inact-int <milliseconds>
+wmm-vi-dscp <video>
+wmm-vo-dscp <voice>
+wpa-hexkey <psk>
+wpa-passphrase <string>
+!
+wlan virtual-ap <profile-name>
+aaa-profile <profile-name>
+allowed-band <band>
+anyspot-profile <profile>
+auth-failure-blacklist-time <seconds>
+blacklist-time <seconds>
+broadcast-filter arp
+clone <profile-name>
+deny-time-range <range>
+forward-mode <mode>
+rap-operation <rap-op>
+ssid-profile <profile-name>
+steering-mode <steering>
+vlan <vlan>
+!
+localip <ipaddr>
+ipsec <key>
+!
+tunnel-group <tungrpname>
+mode <mode>                  
+preemptive-failover 
+tunnel <tunnel-id>                
+!
+ap mesh-cluster-profile <profile>
+clone <profile>
+cluster <name>
+opmode <mode>
+rf-band <band>
+wpa-hexkey <wpa-hexkey>
+wpa-passphrase <wpa-passphrase>
+!
+ap mesh-ht-ssid-profile <profile-name> 
+40MHz-enableba-amsdu-enable
+80MHz-enable
+clone <source>
+high-throughput-enable
+ldpc
+legacy-stations
+max-rx-a-mpdu-size <size>
+max-tx-a-mpdu-size <size>
+max-tx-a-msdu-count-be <be>
+max-tx-a-msdu-count-bg <bg>
+max-tx-a-msdu-count-vi <vi>
+max-tx-a-msdu-count-vo <vo>
+max-vht-mpdu-size <size>
+min-mpdu-start-spacing <spacing>
+mpdu-agg 
+short-guard-intvl-20Mhz
+short-guard-intvl-40Mhz
+short-guard-intvl-80Mhz
+stbc-rx-streams <streams>
+stbc-tx-streams <streams>
+supported-mcs-set <set>
+temporal-diversity
+!
+ap mesh-radio-profile <profile>
+a-tx rates <rates>
+allowed-vlans <vlan-list> 
+children <children>
+clone <profile>
+eapol-rate-opt
+g-tx rates <rates>
+heartbeat-threshold <count>
+hop-count <hop-count>
+link-threshold <count>
+max-retries <max-retries>
+mesh-ht-ssid-profile <profile>
+mesh-mcast-opt 
+mesh-survivability
+metric-algorithm <alg>
+mpv <vlan-id>
+reselection-mode <mode>
+rts-threshold <rts-threshold>
+!
+ap provisioning-profile <profile>
+ap-poe-power-optimization <option>
+apdot1x-passwd <pw>
+apdot1x-username <usr>
+cellular_nw_preference <pref>
+clone <clone>
+link-priority-cellular <prio>
+link-priority-ethernet <prio>
+master clear
+master set <masterstr>
+pppoe-passwd <pw>
+pppoe-service-name <name>
+pppoe-user <usr>
+remote-ap <remot-ap>
+reprovision
+uplink-vlan <uplink-vlan>
+usb-dev <dev>
+usb-dial <dial>
+usb-init <init_string>
+usb-modeswitch -v <default_vendor> -p <default_product> -V <target_vendor> -P <target_product> -M <message_content>
+usb-passwd <pw>
+usb-power-mode <mode>
+usb-tty <tty>
+usb-tty-control <tty_control>
+usb-type <type>
+usb-user <user>
+!
+airgroupservice <STRING>
+autoassociate <option>
+description <STRING>
+disallow-role <STRING>
+disallow-vlan <vlan>
+id <STRING>

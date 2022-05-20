@@ -1,17 +1,9 @@
 /.cli_commands.txt.un~
-/*.txt
 /*.xlsx
 /.pytest_cache
 /acl_parse.docx
 /API raw JSON
-/ar-dr-ctr.cfg
-/ar-wc-ctr.cfg
-/Aruba 7005 Controller Config.txt
-/ArubaCon01.txt
-/atc.txt
-/cli_commands.txt~
+/sample_configs
 /local_runner.py
-/parser_test.txt
 /rps.py
-/ZOC2103_ArubaLocal01-2.txt
 /__pycache__
