@@ -861,7 +861,7 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=0):
     column_widths = get_widest_column_widths(start,data)
     adjust_column_widths(worksheet,column_widths)
 
-    return start + len(data[0]) + 1
+    return start + len(data[0]) + 2
 
 def adjust_column_widths(worksheet,column_widths):
     ''' Adjust the column widths of the table in the worksheet based on the dictionary passed. '''
@@ -1065,10 +1065,13 @@ def group_rates(special_line):
 
     cli_words = special_line.split(' ')
     cli_title = cli_words[0]
-    current_rates = cli_words[1]
-    for rate in cli_words[2:]:
-        current_rates += f",{rate}"
-    return join_words([cli_title,current_rates],' ')
+    if len(cli_words) > 0:
+        current_rates = cli_words[1]
+        for rate in cli_words[2:]:
+            current_rates += f",{rate}"
+        return join_words([cli_title,current_rates],' ')
+    else:
+        return ''
 
 def make_object_from_cli_group(cli_group):
     ''' Gather data from the group and return an object containing parameter: [data] entries. '''
@@ -1143,5 +1146,69 @@ def make_cli_objects(cli_file):
                     if current_object != {}:
                         cli_objects[header] = [current_object]
         return cli_objects
+
+def get_table_range(worksheet, start_column_index):
+    ''' Return a range of cells representing a table. Returns the table and the next cell to start the search. '''
+
+    start_cell = (1,start_column_index)
+    rows = find_table_end(worksheet,column_index=start_column_index,find_rows=True)
+    columns = find_table_end(worksheet,column_index=start_column_index)
+    end_cell = (rows,columns)
+    return [start_cell,end_cell]
+
+def find_table_end(worksheet,column_index=1,find_rows=False):
+    ''' Finds the end of either the column or the row given a worksheet and the column index. The row index always starts at 1.
+        Returns either the row index or column index where the table ends. '''
+    
+    incrementor = increment_rows if find_rows else increment_cols
+    current_col = column_index
+    current_row = 1
+    end_table = False
+    while not end_table:
+        current_cell = worksheet.cell(row=current_row,column=current_col)
+        if current_cell.fill.fgColor.value != '00000000':
+            current_row,current_col = incrementor(current_row,current_col)
+        else:
+            end_table = True
+    return current_row - 1 if find_rows else current_col - 1
+
+def increment_rows(row, col):
+    ''' increments the row by one and returns an array of [row, col] '''
+
+    return [row+1,col]
+
+def increment_cols(row, col):
+    ''' increments the col by one and returns an array of [row, col] '''
+
+    return [row, col+1]
+
+def find_beginning_of_next_table(worksheet, next_column):
+    ''' Returns the index of the next column or -1 if the next table cannot be found at most 3 cells over. '''
+
+    columns_checked = 0
+    row = 1
+    while columns_checked < 3:
+        current_cell = worksheet.cell(row=row,column=next_column)
+        current_cell_color = current_cell.fill.fgColor.value
+        if current_cell_color != '00000000':
+            return next_column
+        else:
+            next_column += 1
+            columns_checked += 1
+    return -1
+
+def get_workbook_table_ranges(workbook):
+    ''' Returns the table ranges, grouped by worksheets, from the excel workbook. '''
+
+    next_column = 1
+    worksheet_dict = {}
+    for sheet in workbook:
+        worksheet_dict[sheet.title] = []
+        while next_column != -1:
+            start_cell, end_cell = get_table_range(sheet, next_column)
+            worksheet_dict[sheet.title].append([start_cell,end_cell])
+            next_column = find_beginning_of_next_table(sheet, end_cell[1]+1)
+        next_column = 1 
+    return worksheet_dict
 
 special_objects_dict = {'ip access-list session' : process_acl }

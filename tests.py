@@ -1,4 +1,5 @@
 import aos6parser
+import openpyxl
 
 def test_join_words_joins_array_with_correct_separator():
     words_list = ['this','and','that']
@@ -136,6 +137,13 @@ def test_calculate_column_letters_returns_double_letters_correctly():
     expected = 'CV'
     assert expected == generated
 
+def test_calculate_column_letters_returns_double_boundary_correctly():
+
+    column_index = 27
+    generated = aos6parser.calculate_column_letters(column_index)
+    expected = 'AA'
+    assert expected == generated
+
 def test_swap_rows_cols_swaps_correctly():
 
     original_array = [['this','that', 'tother'],['those','thot', 'tsther'],['me','my','moo']]
@@ -164,4 +172,16 @@ def test_group_rates_returns_correct_cli_line():
     cli_line = 'a-tx-rates 12 24 36'
     expected = 'a-tx-rates 12,24,36'
     generated = aos6parser.group_rates(cli_line)
+    assert expected == generated
+
+def test_find_table_end_returns_correct_index():
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    data = [['header1','header2','header3'],['value1','value2','value3']]
+    aos6parser.add_table_to_worksheet(data,ws,table_name='table')
+    wb.save('example.xlsx')
+    expected = 3
+    generated = aos6parser.find_table_end(ws)
+
     assert expected == generated
