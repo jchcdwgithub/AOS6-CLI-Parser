@@ -671,8 +671,18 @@ def write_tables_to_excel_worksheets(tables_arrays,output_file):
         current_row = 0
         for table in group[1]:
             table_name = table[0][0].replace(' ','_')
+            table = add_node_column_to_table(table)
             current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
         workbook.save(output_file)
+
+def add_node_column_to_table(table):
+    ''' Adds a node column to the table. '''
+
+    table[0].insert(0,'Node')
+    for row in table[1:]:
+        row.insert(0,'')
+    
+    return table
 
 def group_tables(tables_arrays):
     grouped_tables = {}
@@ -861,7 +871,7 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=0):
     column_widths = get_widest_column_widths(start,data)
     adjust_column_widths(worksheet,column_widths)
 
-    return start + len(data[0]) + 2
+    return start + len(data[0]) + 1
 
 def adjust_column_widths(worksheet,column_widths):
     ''' Adjust the column widths of the table in the worksheet based on the dictionary passed. '''
@@ -1210,5 +1220,32 @@ def get_workbook_table_ranges(workbook):
             next_column = find_beginning_of_next_table(sheet, end_cell[1]+1)
         next_column = 1 
     return worksheet_dict
+
+def gather_cell_values_into_tables(workbook,tables_dict):
+    ''' Gathers all the data in the worksheets into tables, arranged by columns, and returns an array of tables. '''
+
+    tables = []
+    for worksheet in tables_dict:
+        current_worksheet = workbook[worksheet]
+        worksheet_ranges = tables_dict[worksheet]
+        for range in worksheet_ranges:
+            current_table = []
+            start_cell, end_cell = range
+            current_column = start_cell[1]
+            end_column = end_cell[1]
+            end_row = end_cell[0]
+            while current_column <= end_column:
+                current_row = 1
+                column_values = []
+                while current_row <= end_row:
+                    cell_value = current_worksheet.cell(row=current_row,column=current_column).value
+                    if cell_value is None:
+                        cell_value = ''
+                    column_values.append(cell_value)
+                    current_row += 1
+                current_table.append(column_values)
+                current_column += 1
+            tables.append(current_table)
+    return tables
 
 special_objects_dict = {'ip access-list session' : process_acl }
