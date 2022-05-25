@@ -675,6 +675,27 @@ def write_tables_to_excel_worksheets(tables_arrays,output_file):
             current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
         workbook.save(output_file)
 
+def write_show_tables_to_excel_worksheets(tables_arrays,output_file='show_output.xlsx',workbook=''):
+    """ Write the tables in the tables_arrays to the workbook, if given. """
+
+    if workbook == '':
+        workbook = Workbook()
+    first_worksheet = True
+    for show_command in tables_arrays:
+        if first_worksheet:
+            current_worksheet = workbook.active
+            current_worksheet.title = show_command
+            first_worksheet = False
+        else:
+            if len(show_command) > 30:
+                title = show_command[:30]
+            else:
+                title = show_command
+            current_worksheet = workbook.create_sheet(title=title)
+        table_name = show_command
+        add_table_to_worksheet(tables_arrays[show_command], current_worksheet, table_name=table_name, start=0)
+    workbook.save(output_file)
+
 def add_node_column_to_table(table):
     ''' Adds a node column to the table. '''
 
@@ -1246,6 +1267,101 @@ def gather_cell_values_into_tables(workbook,tables_dict):
                 current_table.append(column_values)
                 current_column += 1
             tables.append(current_table)
+    return tables
+
+def calculate_word_spacing(table_headers):
+    ''' Given the table headers, return an array of indices that separates the columns. '''
+
+    dash_index = 0
+    table_data_limits = [0]
+    while dash_index < len(table_headers):
+            #find space
+        while dash_index < len(table_headers) and table_headers[dash_index] != ' ':
+            dash_index += 1
+        while dash_index < len(table_headers) and table_headers[dash_index] == ' ':
+            dash_index += 1
+        table_data_limits.append(dash_index)
+    return table_data_limits
+
+def gather_headers(table_headers,table_headers_underscores):
+    """ Given a line of table headers, return a list of headers. """
+
+    header_index = 0
+    headers = []
+    while header_index < len(table_headers):
+        current_header = ''
+        while table_headers_underscores[header_index] != ' ':
+            current_header += table_headers[header_index]
+            header_index += 1
+            if header_index == len(table_headers):
+                break
+        headers.append(current_header)
+        while header_index < len(table_headers) and table_headers_underscores[header_index] == ' ':
+            header_index += 1
+    
+    return headers
+
+def get_data_lines(log_lines):
+    """ Return a list of numbers representing the limits of the different types of show data in the file. """
+
+    current_line = 0
+    data_lines = []
+    while current_line < len(log_lines):
+        if 'show' in log_lines[current_line] and '\n' == log_lines[current_line+1]:
+            current_line += 3
+            data_lines.append(current_line)
+        else:
+            current_line += 1
+    return data_lines
+
+def group_show_information_into_tables(log_file):
+    """ Reads through a file of show commands and returns the information in them in a table. """
+
+    log_lines = log_file.readlines()
+    data_lines = get_data_lines(log_lines)
+    current_data_index = 0
+    tables = {} 
+    while current_data_index < len(data_lines)-1:
+        start_data = data_lines[current_data_index] - 1
+        current_name = log_lines[start_data]
+        table_headers = log_lines[start_data+2]
+        table_headers_underscores = log_lines[start_data+3]
+        current_table = []
+        headers = gather_headers(table_headers,table_headers_underscores)
+        current_table.append(headers)
+        number_columns = len(headers)
+        #calculate word spacing
+        data_index = start_data + 4
+        while data_index != data_lines[current_data_index+1]:
+            current_data = []
+            header_index = 0
+            table_data_limits = calculate_word_spacing(table_headers_underscores)
+            while header_index+1 <= len(headers):
+                start_word = table_data_limits[header_index]
+                end_word = table_data_limits[header_index+1]
+                current_data.append(log_lines[data_index][start_word:end_word].strip())
+                header_index += 1
+            #check empty last column
+            if current_data[-1] == '\n':
+                current_data[-1] = ''
+            if len(current_data) == number_columns and log_lines[data_index] != '\n':
+                current_table.append(current_data)
+                data_index += 1
+            else:
+                while data_index != data_lines[current_data_index+1] and log_lines[data_index] != current_name:
+                    data_index += 1
+                if data_index == data_lines[current_data_index]:
+                    break
+                data_index += 4
+                if data_index >= len(log_lines):
+                    break
+                elif data_index >= data_lines[current_data_index+1]:
+                    current_data_index += 1
+                    tables[current_name.strip()] = current_table
+                    if current_data_index+1 < len(data_lines):
+                        data_index = data_lines[current_data_index+1]
+                    break
+                table_headers_underscores = log_lines[data_index-1]
     return tables
 
 special_objects_dict = {'ip access-list session' : process_acl }
