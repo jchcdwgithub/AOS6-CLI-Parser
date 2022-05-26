@@ -185,3 +185,10 @@ def test_find_table_end_returns_correct_index():
     generated = aos6parser.find_table_end(ws)
 
     assert expected == generated
+
+def test_get_command_line_prompt_returns_correctly_prompt():
+
+    lines = ["random(DVLWI-DC-WC1) [MDC] *#show ap database long","show","#","(DVLWI-DC-WC1) [MDC] *#show rf ht-radio-profile"]
+    expected = "(DVLWI-DC-WC1) [MDC] *#"
+    generated = aos6parser.get_command_line_prompt(lines)
+    assert expected == generated

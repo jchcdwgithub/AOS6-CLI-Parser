@@ -675,6 +675,24 @@ def write_tables_to_excel_worksheets(tables_arrays,output_file):
             current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
         workbook.save(output_file)
 
+def new_write_tables_to_excel_worksheets(tables_arrays,output_file):
+    grouped_tables = group_tables(tables_arrays)
+    workbook = Workbook()
+    first_worksheet = True
+    for group in grouped_tables:
+        if first_worksheet:
+            current_worksheet = workbook.active
+            current_worksheet.title = group[0]
+            first_worksheet = False
+        else:
+            current_worksheet = workbook.create_sheet(title=group[0])
+        current_row = 1
+        for table in group[1]:
+            table_name = table[0][0].replace(' ','_')
+            table = add_node_column_to_table(table)
+            current_row = new_add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
+        workbook.save(output_file)
+
 def write_show_tables_to_excel_worksheets(tables_arrays,output_file='show_output.xlsx',workbook=''):
     """ Write the tables in the tables_arrays to the workbook, if given. """
 
@@ -880,7 +898,7 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=0):
         current_row_cells = []
         while current_column < start + num_columns:
             current_column_letters = calculate_column_letters(current_column)
-            current_row_cells.append(worksheet[f'{current_column_letters}{current}'])
+            current_row_cells.append(worksheet[f"{current_column_letters}{current}"])
             current_column += 1
         current_data_row = data[data_index]
         for cell,data_value in zip(current_row_cells,current_data_row):
@@ -890,6 +908,32 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=0):
 
     add_color_scheme(worksheet,start_cell,end_cell)
     column_widths = get_widest_column_widths(start,data)
+    adjust_column_widths(worksheet,column_widths)
+
+    return start + len(data[0]) + 1
+
+def new_add_table_to_worksheet(data,worksheet,table_name='',start=1):
+    
+    end_cell_number = len(data)
+    end_cell = (end_cell_number, start + len(data[0]))
+    start_cell = (1,start)
+    num_columns = len(data[0])
+
+    current = 1 
+    data_index = 0
+    while current <= end_cell_number:
+        current_column = start
+        current_row_cells = []
+        while current_column < start + num_columns:
+            current_row_cells.append(worksheet.cell(row=current, column=current_column))
+            current_column += 1
+        current_data_row = data[data_index]
+        for cell,data_value in zip(current_row_cells,current_data_row):
+            cell.value = data_value
+        current += 1
+        data_index += 1 
+    new_add_color_scheme(worksheet,start_cell,end_cell)
+    column_widths = get_widest_column_widths(start-1,data)
     adjust_column_widths(worksheet,column_widths)
 
     return start + len(data[0]) + 1
@@ -906,6 +950,34 @@ def add_color_scheme(worksheet,start_cell,end_cell):
     colors = ['E6B8B7', 'F2DCDB']
     color_index = 0
     rows = worksheet[start_cell:end_cell]
+    for row in rows:
+       if color_index == 0:
+          for cell in row:
+               cell.fill = PatternFill('solid', fgColor = title_row_color)
+               cell.font = Font(color='FFFFFF')
+       else:
+            for cell in row:
+               cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
+               cell.font = Font(color='000000')
+       color_index += 1
+
+def new_add_color_scheme(worksheet,start_cell,end_cell):
+    ''' Add a red table color scheme to the cells in the worksheet. '''
+    title_row_color = 'C0504D'
+    colors = ['E6B8B7', 'F2DCDB']
+    color_index = 0
+    rows = []
+    start_row,start_column = start_cell
+    end_row,end_column = end_cell
+    current_row = 1
+    while current_row <= end_row:
+        current_column = start_column 
+        current_row_list = []
+        while current_column < end_column:
+            current_row_list.append(worksheet.cell(row=current_row,column=current_column))
+            current_column += 1
+        rows.append(current_row_list)
+        current_row += 1
     for row in rows:
        if color_index == 0:
           for cell in row:
@@ -1319,6 +1391,8 @@ def group_show_information_into_tables(log_file):
 
     log_lines = log_file.readlines()
     data_lines = get_data_lines(log_lines)
+    data_lines.append(len(log_lines)-1)
+    empty_prompt = get_command_line_prompt(log_lines)
     current_data_index = 0
     tables = {} 
     while current_data_index < len(data_lines)-1:
@@ -1336,32 +1410,47 @@ def group_show_information_into_tables(log_file):
             current_data = []
             header_index = 0
             table_data_limits = calculate_word_spacing(table_headers_underscores)
-            while header_index+1 <= len(headers):
-                start_word = table_data_limits[header_index]
-                end_word = table_data_limits[header_index+1]
-                current_data.append(log_lines[data_index][start_word:end_word].strip())
-                header_index += 1
-            #check empty last column
-            if current_data[-1] == '\n':
-                current_data[-1] = ''
-            if len(current_data) == number_columns and log_lines[data_index] != '\n':
-                current_table.append(current_data)
-                data_index += 1
-            else:
-                while data_index != data_lines[current_data_index+1] and log_lines[data_index] != current_name:
+            if empty_prompt not in log_lines[data_index]:
+                while header_index+1 <= len(headers):
+                    start_word = table_data_limits[header_index]
+                    end_word = table_data_limits[header_index+1]
+                    current_data.append(log_lines[data_index][start_word:end_word].strip())
+                    header_index += 1
+                #check empty last column
+                if current_data[-1] == '\n':
+                    current_data[-1] = ''
+                if len(current_data) == number_columns and log_lines[data_index] != '\n':
+                    current_table.append(current_data)
                     data_index += 1
-                if data_index == data_lines[current_data_index]:
-                    break
-                data_index += 4
-                if data_index >= len(log_lines):
-                    break
-                elif data_index >= data_lines[current_data_index+1]:
-                    current_data_index += 1
-                    tables[current_name.strip()] = current_table
-                    if current_data_index+1 < len(data_lines):
-                        data_index = data_lines[current_data_index+1]
-                    break
-                table_headers_underscores = log_lines[data_index-1]
+                else:
+                    while data_index != data_lines[current_data_index+1] and log_lines[data_index] != current_name:
+                        data_index += 1
+                    if data_index == data_lines[current_data_index]:
+                        break
+                    data_index += 4
+                    if data_index >= len(log_lines):
+                        current_data_index += 1
+                        tables[current_name.strip()] = current_table
+                        break
+                    elif data_index >= data_lines[current_data_index+1]:
+                        current_data_index += 1
+                        tables[current_name.strip()] = current_table
+                        if current_data_index+1 < len(data_lines):
+                            data_index = data_lines[current_data_index+1]
+                        break
+                    table_headers_underscores = log_lines[data_index-1]
+            else:
+                data_index += 1
     return tables
+
+def get_command_line_prompt(log_lines):
+    """ Returns the command line prompt string. Used to match command line strings later that might appear in a table. """
+
+    for line in log_lines:
+        if '#show' in line.replace(' ','') and '(' == line[0]:
+            show_index = line.index('#')
+            empty_line = line[:show_index+1]
+            return empty_line
+    return ''
 
 special_objects_dict = {'ip access-list session' : process_acl }
