@@ -467,6 +467,8 @@ access-list session <acl> position <number>
 access-list session <acl> ap-group <group>
 access-list session <acl> ap-group <group> position <number>
 bw-contract <name>
+bw-contract <name> upstream
+bw-contract <name> downstream
 bw-contract <name> per-user downstream
 bw-contract <name> per-user upstream
 bw-contract <name> per-apgroup downstream

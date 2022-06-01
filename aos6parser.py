@@ -983,6 +983,7 @@ def extract_information_from_rule(rule, cli_line):
     data = ''
     pair_list = []
     cli_words = cli_line.split(' ')
+    cli_words = remove_empty_values(cli_words)
     rule_words = rule.split(' ')
     first_word = rule_words[0]
     header += first_word
@@ -1010,9 +1011,21 @@ def extract_information_from_rule(rule, cli_line):
                 rule_index += 1
             header = first_word
             data = ''
-    if header.split(' ')[-1] == rule_words[-1]:
-        pair_list.append((header, 'True'))
+    if header.split(' ')[-1] == rule_words[-1] and len(pair_list) > 0:
+        current_data = pair_list[-1][1]
+        current_header = pair_list[-1][0]
+        current_data += f" {rule_words[-1]}"
+        pair_list[-1] = (current_header, current_data)
     return pair_list
+
+def remove_empty_values(word_list):
+    ''' Removes any empty values form the word list. They represent extra spaces that might have been added to the input. '''
+
+    new_list = []
+    for word in word_list:
+        if word != '':
+            new_list.append(word)
+    return new_list
 
 def match_cli_output_to_rule(object_name, cli_output):
     "Given a cli line, match it with the set of rules associated with the object. "
@@ -1023,6 +1036,7 @@ def match_cli_output_to_rule(object_name, cli_output):
         correct_rule = ''
         rule_index = 0
         cli_words = cli_output.split(' ')
+        cli_words = remove_empty_values(cli_words)
         for rule in cli_rules:
             rule_words = rule.split(' ')
             rule_length = len(rule_words)
@@ -1198,15 +1212,6 @@ def get_table_range(worksheet, start_column_index):
     end_cell = (end_row, end_col)
     return [start_cell,end_cell]
 
-def new_get_table_range(worksheet, start_column_index):
-    ''' Return a range of cells representing a table. Returns the table and the next cell to start the search. '''
-
-    start_cell = (1,start_column_index)
-    rows = new_find_table_end(worksheet,column_index=start_column_index,find_rows=True)
-    columns = new_find_table_end(worksheet,column_index=start_column_index)
-    end_cell = (rows, columns)
-    return [start_cell,end_cell]
-
 def check_for_added_rows(worksheet, start_column, end_row, end_column):
     ''' Checks whether there have been other data added to the current table and if so will return the updated row count. '''
 
@@ -1238,20 +1243,6 @@ def check_for_added_columns(worksheet, end_column):
             columns_added = False
     return current_col - 1 
 
-def new_find_table_end(worksheet, column_index=1, find_rows=False):
-
-    incrementor = increment_rows if find_rows else increment_cols
-    current_col = column_index
-    current_row = 1
-    end_table = False
-    while not end_table:
-        current_cell_value = worksheet.cell(row=current_row, column=current_col).value
-        if current_cell_value is not None:
-            current_row,current_col = incrementor(current_row,current_col)
-        else:
-            end_table = True
-    return current_row - 1 if find_rows else current_col - 1
-    
 def find_table_end(worksheet,column_index=1,find_rows=False):
     ''' Finds the end of either the column or the row given a worksheet and the column index. The row index always starts at 1.
         Returns either the row index or column index where the table ends. '''
@@ -1302,20 +1293,6 @@ def get_workbook_table_ranges(workbook):
         worksheet_dict[sheet.title] = []
         while next_column != -1:
             start_cell, end_cell = get_table_range(sheet, next_column)
-            worksheet_dict[sheet.title].append([start_cell,end_cell])
-            next_column = find_beginning_of_next_table(sheet, end_cell[1]+1)
-        next_column = 1 
-    return worksheet_dict
-
-def new_get_workbook_table_ranges(workbook):
-    ''' Returns the table ranges, grouped by worksheets, from the excel workbook. '''
-
-    next_column = 1
-    worksheet_dict = {}
-    for sheet in workbook:
-        worksheet_dict[sheet.title] = []
-        while next_column != -1:
-            start_cell, end_cell = new_get_table_range(sheet, next_column)
             worksheet_dict[sheet.title].append([start_cell,end_cell])
             next_column = find_beginning_of_next_table(sheet, end_cell[1]+1)
         next_column = 1 
