@@ -668,29 +668,11 @@ def write_tables_to_excel_worksheets(tables_arrays,output_file):
             first_worksheet = False
         else:
             current_worksheet = workbook.create_sheet(title=group[0])
-        current_row = 0
-        for table in group[1]:
-            table_name = table[0][0].replace(' ','_')
-            table = add_node_column_to_table(table)
-            current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
-        workbook.save(output_file)
-
-def new_write_tables_to_excel_worksheets(tables_arrays,output_file):
-    grouped_tables = group_tables(tables_arrays)
-    workbook = Workbook()
-    first_worksheet = True
-    for group in grouped_tables:
-        if first_worksheet:
-            current_worksheet = workbook.active
-            current_worksheet.title = group[0]
-            first_worksheet = False
-        else:
-            current_worksheet = workbook.create_sheet(title=group[0])
         current_row = 1
         for table in group[1]:
             table_name = table[0][0].replace(' ','_')
             table = add_node_column_to_table(table)
-            current_row = new_add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
+            current_row = add_table_to_worksheet(table, current_worksheet, table_name=table_name, start=current_row) 
         workbook.save(output_file)
 
 def write_show_tables_to_excel_worksheets(tables_arrays,output_file='show_output.xlsx',workbook=''):
@@ -884,35 +866,7 @@ def write_to_excel(title, data, workbook, start):
     table = Table(displayName='SSID',ref=f'A{start}:F{start + len(data)}')
     current_ws.add_table(table)
 
-def add_table_to_worksheet(data,worksheet,table_name='',start=0):
-    
-    end_cell_number = len(data)
-    end_cell = calculate_column_letters(start + len(data[0])-1) + str(end_cell_number)
-    start_cell = calculate_column_letters(start) + '1'
-    num_columns = len(data[0])
-
-    current = 1 
-    data_index = 0
-    while current <= end_cell_number:
-        current_column = start
-        current_row_cells = []
-        while current_column < start + num_columns:
-            current_column_letters = calculate_column_letters(current_column)
-            current_row_cells.append(worksheet[f"{current_column_letters}{current}"])
-            current_column += 1
-        current_data_row = data[data_index]
-        for cell,data_value in zip(current_row_cells,current_data_row):
-            cell.value = data_value
-        current += 1
-        data_index += 1 
-
-    add_color_scheme(worksheet,start_cell,end_cell)
-    column_widths = get_widest_column_widths(start,data)
-    adjust_column_widths(worksheet,column_widths)
-
-    return start + len(data[0]) + 1
-
-def new_add_table_to_worksheet(data,worksheet,table_name='',start=1):
+def add_table_to_worksheet(data,worksheet,table_name='',start=1):
     
     end_cell_number = len(data)
     end_cell = (end_cell_number, start + len(data[0]))
@@ -932,11 +886,11 @@ def new_add_table_to_worksheet(data,worksheet,table_name='',start=1):
             cell.value = data_value
         current += 1
         data_index += 1 
-    new_add_color_scheme(worksheet,start_cell,end_cell)
+    add_color_scheme(worksheet,start_cell,end_cell)
     column_widths = get_widest_column_widths(start-1,data)
     adjust_column_widths(worksheet,column_widths)
 
-    return start + len(data[0]) + 1
+    return start + len(data[0]) + 3
 
 def adjust_column_widths(worksheet,column_widths):
     ''' Adjust the column widths of the table in the worksheet based on the dictionary passed. '''
@@ -945,23 +899,6 @@ def adjust_column_widths(worksheet,column_widths):
         worksheet.column_dimensions[column_letter].width = column_widths[column_letter] + 5
 
 def add_color_scheme(worksheet,start_cell,end_cell):
-    ''' Add a red table color scheme to the cells in the worksheet. '''
-    title_row_color = 'C0504D'
-    colors = ['E6B8B7', 'F2DCDB']
-    color_index = 0
-    rows = worksheet[start_cell:end_cell]
-    for row in rows:
-       if color_index == 0:
-          for cell in row:
-               cell.fill = PatternFill('solid', fgColor = title_row_color)
-               cell.font = Font(color='FFFFFF')
-       else:
-            for cell in row:
-               cell.fill = PatternFill('solid', fgColor=colors[color_index%2])
-               cell.font = Font(color='000000')
-       color_index += 1
-
-def new_add_color_scheme(worksheet,start_cell,end_cell):
     ''' Add a red table color scheme to the cells in the worksheet. '''
     title_row_color = 'C0504D'
     colors = ['E6B8B7', 'F2DCDB']
@@ -1256,9 +1193,65 @@ def get_table_range(worksheet, start_column_index):
     start_cell = (1,start_column_index)
     rows = find_table_end(worksheet,column_index=start_column_index,find_rows=True)
     columns = find_table_end(worksheet,column_index=start_column_index)
-    end_cell = (rows,columns)
+    end_row = check_for_added_rows(worksheet, start_column_index, rows, columns)
+    end_col = check_for_added_columns(worksheet, columns)
+    end_cell = (end_row, end_col)
     return [start_cell,end_cell]
 
+def new_get_table_range(worksheet, start_column_index):
+    ''' Return a range of cells representing a table. Returns the table and the next cell to start the search. '''
+
+    start_cell = (1,start_column_index)
+    rows = new_find_table_end(worksheet,column_index=start_column_index,find_rows=True)
+    columns = new_find_table_end(worksheet,column_index=start_column_index)
+    end_cell = (rows, columns)
+    return [start_cell,end_cell]
+
+def check_for_added_rows(worksheet, start_column, end_row, end_column):
+    ''' Checks whether there have been other data added to the current table and if so will return the updated row count. '''
+
+    rows_added = True
+    current_row = end_row+1
+    while rows_added:
+        columns = [col for col in range(start_column, end_column+1)]
+        current_cells = [worksheet.cell(row=current_row, column=col).value for col in columns]
+        is_empty = True
+        for cell_value in current_cells:
+            if cell_value is not None:
+                is_empty = False
+        if not is_empty:
+            current_row += 1
+        else:
+            rows_added = False
+    return current_row - 1
+
+def check_for_added_columns(worksheet, end_column):
+    ''' Checks for whether columns have been added to the table and if so will return the updated column count. '''
+
+    columns_added = True
+    current_col = end_column+1
+    while columns_added:
+        potential_header = worksheet.cell(row=1,column=current_col)
+        if potential_header.value is not None:
+            current_col += 1
+        else:
+            columns_added = False
+    return current_col - 1 
+
+def new_find_table_end(worksheet, column_index=1, find_rows=False):
+
+    incrementor = increment_rows if find_rows else increment_cols
+    current_col = column_index
+    current_row = 1
+    end_table = False
+    while not end_table:
+        current_cell_value = worksheet.cell(row=current_row, column=current_col).value
+        if current_cell_value is not None:
+            current_row,current_col = incrementor(current_row,current_col)
+        else:
+            end_table = True
+    return current_row - 1 if find_rows else current_col - 1
+    
 def find_table_end(worksheet,column_index=1,find_rows=False):
     ''' Finds the end of either the column or the row given a worksheet and the column index. The row index always starts at 1.
         Returns either the row index or column index where the table ends. '''
@@ -1271,7 +1264,7 @@ def find_table_end(worksheet,column_index=1,find_rows=False):
         current_cell = worksheet.cell(row=current_row,column=current_col)
         if current_cell.fill.fgColor.value != '00000000':
             current_row,current_col = incrementor(current_row,current_col)
-        else:
+        else: 
             end_table = True
     return current_row - 1 if find_rows else current_col - 1
 
@@ -1309,6 +1302,20 @@ def get_workbook_table_ranges(workbook):
         worksheet_dict[sheet.title] = []
         while next_column != -1:
             start_cell, end_cell = get_table_range(sheet, next_column)
+            worksheet_dict[sheet.title].append([start_cell,end_cell])
+            next_column = find_beginning_of_next_table(sheet, end_cell[1]+1)
+        next_column = 1 
+    return worksheet_dict
+
+def new_get_workbook_table_ranges(workbook):
+    ''' Returns the table ranges, grouped by worksheets, from the excel workbook. '''
+
+    next_column = 1
+    worksheet_dict = {}
+    for sheet in workbook:
+        worksheet_dict[sheet.title] = []
+        while next_column != -1:
+            start_cell, end_cell = new_get_table_range(sheet, next_column)
             worksheet_dict[sheet.title].append([start_cell,end_cell])
             next_column = find_beginning_of_next_table(sheet, end_cell[1]+1)
         next_column = 1 
