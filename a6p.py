@@ -22,7 +22,7 @@ else:
 if args.show:
     with open(input_file) as show_file:
         tables = aos6parser.group_show_information_into_tables(show_file)
-        aos6parser.write_show_tables_to_excel_worksheets(tables)
+        aos6parser.write_show_tables_to_excel_worksheets(tables,output_file)
 else:
     aos6parser.populate_cli_rules(template_file)
     cli_objects = aos6parser.make_cli_objects(input_file)

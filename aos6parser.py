@@ -693,7 +693,7 @@ def write_show_tables_to_excel_worksheets(tables_arrays,output_file='show_output
                 title = show_command
             current_worksheet = workbook.create_sheet(title=title)
         table_name = show_command
-        add_table_to_worksheet(tables_arrays[show_command], current_worksheet, table_name=table_name, start=0)
+        add_table_to_worksheet(tables_arrays[show_command], current_worksheet, table_name=table_name, start=1)
     workbook.save(output_file)
 
 def add_node_column_to_table(table):
