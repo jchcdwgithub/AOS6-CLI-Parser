@@ -1344,16 +1344,17 @@ def gather_headers(table_headers,table_headers_underscores):
 
     header_index = 0
     headers = []
-    while header_index < len(table_headers):
+    max_len = len(table_headers) if len(table_headers) < len(table_headers_underscores) else len(table_headers_underscores)
+    while header_index < max_len:
         current_header = ''
         while table_headers_underscores[header_index] != ' ':
             current_header += table_headers[header_index]
             header_index += 1
-            if header_index == len(table_headers):
+            if header_index == max_len:
                 break
         headers.append(current_header)
-        while header_index < len(table_headers) and table_headers_underscores[header_index] == ' ':
-            header_index += 1
+        while header_index < max_len and table_headers_underscores[header_index] == ' ':
+                header_index += 1
     
     return headers
 
@@ -1374,57 +1375,133 @@ def group_show_information_into_tables(log_file):
     """ Reads through a file of show commands and returns the information in them in a table. """
 
     log_lines = log_file.readlines()
+    empty_prompt = get_command_line_prompt(log_lines)
+    #auto logged files from putty inserts extra \n for whatever reason
+    log_lines = clear_excessive_empty_lines(log_lines,empty_prompt)
     data_lines = get_data_lines(log_lines)
     data_lines.append(len(log_lines)-1)
-    empty_prompt = get_command_line_prompt(log_lines)
-    current_data_index = 0
+    log_lines,table_names= clear_flag_sections(log_lines,empty_prompt,data_lines)
+    tables_groups = group_output_tables(log_lines,table_names)
     tables = {} 
-    while current_data_index < len(data_lines)-1:
-        start_data = data_lines[current_data_index] - 1
-        current_name = log_lines[start_data]
-        table_headers = log_lines[start_data+2]
-        table_headers_underscores = log_lines[start_data+3]
-        current_table = []
-        headers = gather_headers(table_headers,table_headers_underscores)
-        current_table.append(headers)
-        number_columns = len(headers)
-        #calculate word spacing
-        data_index = start_data + 4
-        while data_index != data_lines[current_data_index+1]:
-            current_data = []
-            header_index = 0
-            table_data_limits = calculate_word_spacing(table_headers_underscores)
-            if empty_prompt not in log_lines[data_index]:
-                while header_index+1 <= len(headers):
-                    start_word = table_data_limits[header_index]
-                    end_word = table_data_limits[header_index+1]
-                    current_data.append(log_lines[data_index][start_word:end_word].strip())
-                    header_index += 1
-                #check empty last column
-                if current_data[-1] == '\n':
-                    current_data[-1] = ''
-                if len(current_data) == number_columns and log_lines[data_index] != '\n':
-                    current_table.append(current_data)
-                    data_index += 1
-                else:
-                    while data_index != data_lines[current_data_index+1] and log_lines[data_index] != current_name:
-                        data_index += 1
-                    if data_index == data_lines[current_data_index]:
-                        break
-                    data_index += 4
-                    if data_index >= len(log_lines):
-                        current_data_index += 1
-                        tables[current_name.strip()] = current_table
-                        break
-                    elif data_index >= data_lines[current_data_index+1]:
-                        current_data_index += 1
-                        tables[current_name.strip()] = current_table
-                        if current_data_index+1 < len(data_lines):
-                            data_index = data_lines[current_data_index+1]
-                        break
-                    table_headers_underscores = log_lines[data_index-1]
+    for table_group in tables_groups:
+        extract_information_from_table_group(table_group,tables)
+    return tables
+
+def extract_information_from_table_group(table_group,tables):
+    """ table_group is a list of tables separated by table titles and table headers. Return a dictionary of the table columns. """
+
+    current_index = 1
+    table_title = table_group[0]
+    headers = gather_headers(table_group[current_index+1],table_group[current_index+2])
+    tables[table_title] = [headers]
+    table_positions = index_table_positions(table_group,table_title)
+    table_index = 0
+    while table_index + 1 < len(table_positions):
+        sub_table = table_group[table_positions[table_index]:table_positions[table_index+1]]
+        sub_table_rows = gather_table_columns(sub_table)
+        table_index += 1
+        tables[table_title] += sub_table_rows
+    return tables
+
+def gather_table_columns(table):
+    """ Given a show table, gather the data from each row into individual column values and return a list of column values. """
+
+    current_index = 0
+    table_header_underscores = table[current_index+3]
+    table_data_limits = calculate_word_spacing(table_header_underscores)
+    current_table = []
+    current_index += 4
+    while current_index < len(table):
+        column_values = []
+        data_index = 0
+        current_row = table[current_index]
+        while data_index+1 < len(table_data_limits):
+            start_word = table_data_limits[data_index]
+            end_word = table_data_limits[data_index+1]
+            current_value = current_row[start_word:end_word]
+            column_values.append(current_value)
+            data_index += 1
+        current_table.append(column_values)
+        current_index += 1
+    return current_table
+
+def index_table_positions(table_group,table_title):
+    """ Return an array of positions for the tables in table_group. """
+
+    table_positions = [] 
+    current_index = 0
+    while current_index < len(table_group):
+        if table_group[current_index] == table_title:
+            table_positions.append(current_index)
+        current_index += 1
+    table_positions.append(len(table_group))
+    return table_positions
+
+def clear_excessive_empty_lines(lines,empty_prompt):
+    """ Clears any lines containing only newspace. """
+
+    new_lines = []
+    current_line = 0
+    while current_line < len(lines):
+        if lines[current_line] == '\n':
+            if empty_prompt in lines[current_line-1]:
+                new_lines.append(lines[current_line])
+        else:
+            new_lines.append(lines[current_line])
+        current_line += 1
+    return new_lines
+
+def clear_flag_sections(log_lines, empty_prompt, data_lines):
+    """ Clears the flag sections between and after tables. """
+
+    data_index = 0
+    start_data = data_lines[data_index] - 1
+    current_name = log_lines[start_data]
+    table_names = [current_name]
+    starts_with_flag = re.compile(r'^Flag')
+    new_lines = []
+    while start_data < len(log_lines):
+        if starts_with_flag.match(log_lines[start_data]):
+            while log_lines[start_data] != current_name and log_lines[start_data].strip() != empty_prompt and f"{empty_prompt}show" not in log_lines[start_data]:
+                start_data += 1 
+                if start_data == len(log_lines):
+                    break
+        elif log_lines[start_data].strip() == empty_prompt:
+            data_index += 1
+            if data_index < len(data_lines):
+                start_data = data_lines[data_index] - 1
+                current_name = log_lines[start_data]
+                table_names.append(current_name)
             else:
-                data_index += 1
+                break
+        elif f"{empty_prompt}show" in log_lines[start_data]:
+            data_index += 1
+            if data_index < len(data_lines):
+                start_data = data_lines[data_index] - 1
+                current_name = log_lines[start_data]
+                table_names.append(current_name)
+        else:
+            new_lines.append(log_lines[start_data])
+            start_data += 1
+    return new_lines,table_names
+
+def group_output_tables(log_lines, table_names):
+    """ The log lines only contain table information without any of the cli prompts. """
+
+    current_index = 0
+    table_index = 1
+    if len(table_names) == 1:
+        return [log_lines]
+    tables = []
+    while current_index < len(log_lines):
+        current_table = []
+        while log_lines[current_index] != table_names[table_index]:
+            current_table.append(log_lines[current_index])
+            current_index += 1
+        tables.append(current_table)
+        table_index += 1
+        if table_index == len(table_names):
+            break
     return tables
 
 def get_command_line_prompt(log_lines):
