@@ -1409,6 +1409,7 @@ def gather_table_columns(table):
     current_index = 0
     table_header_underscores = table[current_index+3]
     table_data_limits = calculate_word_spacing(table_header_underscores)
+    recalculate_final_column_spacing(table,table_data_limits)
     current_table = []
     current_index += 4
     while current_index < len(table):
@@ -1424,6 +1425,19 @@ def gather_table_columns(table):
         current_table.append(column_values)
         current_index += 1
     return current_table
+
+def recalculate_final_column_spacing(table,table_data_limits):
+    """ The final column doesn't always follow the header spacing. This function modifies the final column to reflect that. """
+
+    underscore_index = 3
+    max_row_length = len(table[underscore_index])
+    for row in table[4:]:
+        row_length = len(row)
+        if row_length > max_row_length:
+            max_row_length = row_length
+    table_data_limits[-1] = max_row_length
+
+    
 
 def index_table_positions(table_group,table_title):
     """ Return an array of positions for the tables in table_group. """
