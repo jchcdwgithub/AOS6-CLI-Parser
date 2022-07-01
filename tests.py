@@ -192,3 +192,116 @@ def test_get_command_line_prompt_returns_correctly_prompt():
     expected = "(DVLWI-DC-WC1) [MDC] *#"
     generated = aos6parser.get_command_line_prompt(lines)
     assert expected == generated
+
+def test_group_profiles_groups_single_lines_correctly():
+
+    lines = ["ap-group 'group-a'\n","ap-group 'group-b'\n","ap-group 'group-c'\n"]
+    expected = [["ap-group 'group-a'\n"],
+                ["ap-group 'group-b'\n"],
+                ["ap-group 'group-c'\n"]
+    ]
+    generated = aos6parser.group_profiles(lines)
+    assert expected == generated
+
+def test_group_profiles_groups_multi_line_profiles_correctly():
+
+    lines = ["ap-group 'group-a'\n", "    virtual-ap 'virt-ap-1'\n", "    virtual-ap 'virt-ap-2'\n", 
+             "ap-group 'group-b'\n", "    virtual-ap 'virt-ap-3\n",
+             "ap-group 'group-c'\n"]
+
+    expected = [
+        ["ap-group 'group-a'\n", "    virtual-ap 'virt-ap-1'\n", "    virtual-ap 'virt-ap-2'\n"],
+        ["ap-group 'group-b'\n", "    virtual-ap 'virt-ap-3\n"],
+        ["ap-group 'group-c'\n"]
+    ]
+    generated = aos6parser.group_profiles(lines)
+    assert expected == generated
+
+def test_group_profiles_groups_multi_line_last_correctly():
+
+    lines = ["wlan ssid-profile 'prof1_ssid_prof'\n",
+             "wlan ssid-profile 'prof2_ssid_prof'\n", "    opmode wpa2-aes-psk\n",
+             "wlan ssid-profile 'prof3_ssid_prof'\n", "    opmode wpa2-aes\n"]
+
+    expected = [
+        ["wlan ssid-profile 'prof1_ssid_prof'\n"],
+        ["wlan ssid-profile 'prof2_ssid_prof'\n", "    opmode wpa2-aes-psk\n"],
+        ["wlan ssid-profile 'prof3_ssid_prof'\n", "    opmode wpa2-aes\n"]
+    ]
+    generated = aos6parser.group_profiles(lines)
+    assert expected == generated
+
+def test_is_show_table_returns_true_for_properly_formatted_table():
+
+    test_input = ["(BC-ParkCity-7005-ARU421) #show ap database long\n","\n","\n","\n","AP Database\n","\n","-----------\n","\n","Name                 Group                         AP Type  IP Address    Status              Flags  Switch IP     Standby IP  Wired MAC Address  Serial #    Port  FQLN  Outer IP  User\n","\n","----                 -----                         -------  ----------    ------              -----  ---------     ----------  -----------------  --------    ----  ----  --------  ----\n"
+    ]
+
+    expected = True
+    generated = aos6parser.is_show_table(0, test_input)
+    assert expected == generated
+
+def test_is_show_table_returns_false_for_non_tables():
+
+    test_input = ["(BC-RoundLake-7005-ARU420) #show ip interface br\n", "\n", "\n", "\n", 
+                  "Interface                   IP Address / IP Netmask        Admin   Protocol   VRRP-IP         (VRRP-Id)\n","\n","\n",
+                  "vlan 1                      unassigned / unassigned        up      up         none            (none)","\n",
+                  "vlan 15                   10.22.10.253 / 255.255.255.0     up      up         none            (none)","\n",
+                  "loopback                    unassigned / unassigned        up      up\n","\n","\n","\n"]
+
+    expected = False
+    generated = aos6parser.is_show_table(0,test_input)
+    assert expected == generated 
+
+def test_group_show_run_and_show_table_groups_show_commands_correctly():
+
+    test_input = ["(BC-RoundLake-7005-ARU420) #show run\n","\n","\n","\n",
+                  "aaa profile 'some profile'\n","    some tech\n", "    some other tech\n", "    this and others\n","\n","!\n",
+                  "end\n", "\n","\n",
+                  "(BC-RoundLake-7005-ARU420) #show ap database long\n", "\n", "\n", "\n", "\n",
+                  "AP Database", "\n", "-------------\n","\n","\n",
+                  "Header 1      Header 2          Header 3          Header 4         End\n","\n","\n","\n",
+                  "--------      --------          --------          --------         ---\n","\n","\n","\n","\n"]
+
+    expected = [["(BC-RoundLake-7005-ARU420) #show run\n","aaa profile 'some profile'\n","    some tech\n", "    some other tech\n", "    this and others\n","!\n","end\n"],
+                ["(BC-RoundLake-7005-ARU420) #show ap database long\n", "AP Database", "-------------\n","Header 1      Header 2          Header 3          Header 4         End\n","--------      --------          --------          --------         ---\n"]]
+
+    generated = aos6parser.group_run_and_table_commands(test_input)
+    assert expected == generated
+
+def test_group_show_run_and_show_table_groups_show_commands_that_are_intermixed_correctly():
+
+    test_input = [
+                  "(BC-RoundLake-7005-ARU420) #show ap database long\n", "\n", "\n", "\n", "\n",
+                  "AP Database", "\n", "-------------\n","\n","\n",
+                  "Header 1      Header 2          Header 3          Header 4         End\n","\n","\n","\n",
+                  "--------      --------          --------          --------         ---\n","\n","\n","\n","\n"
+                  "(BC-RoundLake-7005-ARU420) #show run\n","\n","\n","\n",
+                  "aaa profile 'some profile'\n","    some tech\n", "    some other tech\n", "    this and others\n","\n","!\n",
+                  "end\n", "\n","\n",
+                  "(BC-RoundLake-7005-ARU420) #show ap active\n", "\n", "\n", "\n", "\n",
+                  "AP Active", "\n", "-------------\n","\n",
+                  "Header 1      Header 2          Header 3          Header 4         End\n","\n",
+                  "--------      --------          --------          --------         ---\n","\n","\n","\n","\n"
+                  ]
+
+    expected = [["\n(BC-RoundLake-7005-ARU420) #show run\n","aaa profile 'some profile'\n","    some tech\n", "    some other tech\n", "    this and others\n","!\n","end\n"],
+    ["(BC-RoundLake-7005-ARU420) #show ap database long\n", "AP Database", "-------------\n","Header 1      Header 2          Header 3          Header 4         End\n","--------      --------          --------          --------         ---\n",
+     "(BC-RoundLake-7005-ARU420) #show ap active\n","AP Active", "-------------\n","Header 1      Header 2          Header 3          Header 4         End\n","--------      --------          --------          --------         ---\n",
+    ]]
+
+    generated = aos6parser.group_run_and_table_commands(test_input)
+    assert expected == generated
+
+def test_get_appliance_name_returns_name_from_empty_prompt():
+
+    empty_prompt = "(BC-ParkCity-7005-ARU421) #"
+    expected = "BC-ParkCity-7005-ARU421"
+    generated = aos6parser.get_appliance_name(empty_prompt)
+    assert expected == generated
+
+def test_get_appliance_name_returns_empty_string_for_invalid_prompt():
+
+    invalid_prompt = "some randome value )"
+    expected = ''
+    generated = aos6parser.get_appliance_name(invalid_prompt)
+    assert expected == generated

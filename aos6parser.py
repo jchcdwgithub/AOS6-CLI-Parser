@@ -1,8 +1,10 @@
+from turtle import left
 from docx import Document
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.table import Table
 from openpyxl.styles import PatternFill, Font
 from openpyxl.utils import get_column_letter
+import os
 import re
 import math
 
@@ -696,6 +698,33 @@ def write_show_tables_to_excel_worksheets(tables_arrays,output_file='show_output
         add_table_to_worksheet(tables_arrays[show_command], current_worksheet, table_name=table_name, start=1)
     workbook.save(output_file)
 
+def new_write_show_tables_to_excel_worksheets(tables_arrays, output_file='show_output.xlsx',workbook=''):
+    """ Write the tables in the tables_arrays to the workbook, if given. """
+
+    if workbook == '':
+        workbook = Workbook()
+    first_worksheet = True
+    for show_command in tables_arrays:
+        if first_worksheet:
+            current_worksheet = workbook.active
+            current_worksheet.title = show_command
+            first_worksheet = False
+        else:
+            if len(show_command) > 30:
+                title = show_command[:30]
+            else:
+                title = show_command
+            current_worksheet = workbook.create_sheet(title=title)
+        table_name = show_command
+        start = 1
+        table_row_len = len(tables_arrays[show_command][0][0])
+        for table in tables_arrays[show_command]:
+            print(f"Adding table to {show_command} worksheet ... ")
+            appliance_name = table[-1]
+            new_add_table_to_worksheet(table[:-1], current_worksheet, appliance_name=appliance_name, table_name=table_name, start=start)
+            start += table_row_len + 1
+    workbook.save(output_file)
+
 def add_node_column_to_table(table):
     ''' Adds a node column to the table. '''
 
@@ -892,6 +921,36 @@ def add_table_to_worksheet(data,worksheet,table_name='',start=1):
 
     return start + len(data[0]) + 3
 
+def new_add_table_to_worksheet(data,worksheet,appliance_name='',table_name='',start=1):
+    
+    end_cell_number = len(data)
+    end_cell = (end_cell_number, start + len(data[0]))
+    start_cell = (1 if appliance_name == '' else 2,start)
+    num_columns = len(data[0])
+
+    current = 1 
+    data_index = 0
+    if appliance_name != '':
+        appliance_name_cell = worksheet.cell(row=1,column=start)
+        appliance_name_cell.value = appliance_name
+        current += 1
+    while current <= end_cell_number:
+        current_column = start
+        current_row_cells = []
+        while current_column < start + num_columns:
+            current_row_cells.append(worksheet.cell(row=current, column=current_column))
+            current_column += 1
+        current_data_row = data[data_index]
+        for cell,data_value in zip(current_row_cells,current_data_row):
+            cell.value = data_value
+        current += 1
+        data_index += 1 
+    add_color_scheme(worksheet,start_cell,end_cell)
+    column_widths = get_widest_column_widths(start-1,data)
+    adjust_column_widths(worksheet,column_widths)
+
+    return
+
 def adjust_column_widths(worksheet,column_widths):
     ''' Adjust the column widths of the table in the worksheet based on the dictionary passed. '''
 
@@ -906,7 +965,7 @@ def add_color_scheme(worksheet,start_cell,end_cell):
     rows = []
     start_row,start_column = start_cell
     end_row,end_column = end_cell
-    current_row = 1
+    current_row = start_row 
     while current_row <= end_row:
         current_column = start_column 
         current_row_list = []
@@ -1358,14 +1417,27 @@ def gather_headers(table_headers,table_headers_underscores):
     
     return headers
 
-def get_data_lines(log_lines):
+def get_data_lines(file_lines):
     """ Return a list of numbers representing the limits of the different types of show data in the file. """
 
     current_line = 0
     data_lines = []
-    while current_line < len(log_lines):
-        if 'show' in log_lines[current_line] and '\n' == log_lines[current_line+1]:
+    while current_line < len(file_lines):
+        if 'show' in file_lines[current_line] and '\n' == file_lines[current_line+1]:
             current_line += 3
+            data_lines.append(current_line)
+        else:
+            current_line += 1
+    return data_lines
+
+def new_get_data_lines(file_lines):
+    """ Return a list of numbers representing the limits of the different types of show data in the file. """
+
+    current_line = 0
+    data_lines = []
+    while current_line < len(file_lines):
+        if 'show' in file_lines[current_line]:
+            current_line += 2
             data_lines.append(current_line)
         else:
             current_line += 1
@@ -1375,13 +1447,26 @@ def group_show_information_into_tables(log_file):
     """ Reads through a file of show commands and returns the information in them in a table. """
 
     log_lines = log_file.readlines()
-    empty_prompt = get_command_line_prompt(log_lines)
+    empty_prompt = get_command_line_prompt(file_lines)
     #auto logged files from putty inserts extra \n for whatever reason
-    log_lines = clear_excessive_empty_lines(log_lines,empty_prompt)
-    data_lines = get_data_lines(log_lines)
-    data_lines.append(len(log_lines)-1)
-    log_lines,table_names= clear_flag_sections(log_lines,empty_prompt,data_lines)
-    tables_groups = group_output_tables(log_lines,table_names)
+    file_lines = clear_excessive_empty_lines(log_lines,empty_prompt)
+    data_lines = get_data_lines(file_lines)
+    data_lines.append(len(file_lines)-1)
+    file_lines,table_names= clear_flag_sections(log_lines,empty_prompt,data_lines)
+    tables_groups = group_output_tables(file_lines,table_names)
+    tables = {} 
+    for table_group in tables_groups:
+        extract_information_from_table_group(table_group,tables)
+    return tables
+
+def new_group_show_information_into_tables(file_lines):
+    """ Reads through a file of show commands and returns the information in them in a table. """
+
+    empty_prompt = get_command_line_prompt(file_lines)
+    data_lines = new_get_data_lines(file_lines)
+    data_lines.append(len(file_lines)-1)
+    file_lines,table_names= clear_flag_sections(file_lines,empty_prompt,data_lines)
+    tables_groups = group_output_tables(file_lines,table_names)
     tables = {} 
     for table_group in tables_groups:
         extract_information_from_table_group(table_group,tables)
@@ -1527,5 +1612,163 @@ def get_command_line_prompt(log_lines):
             empty_line = line[:show_index+1]
             return empty_line
     return ''
+
+def grab_specific_lines_from_files(directory_name,out_file_name,regex_list):
+    """ Used to grab a specific command from a set of show run files found in directory_name based on the list of regexes ( 2 max ).
+        The matches will be outputted in the out_file_name which should be a name with full path information. """
+
+    directory = directory_name
+    out_file = out_file_name
+    main_things = []
+    main_regex = regex_list[0]
+    main_match = re.compile(rf"{main_regex}")
+    if len(regex_list) > 1:
+        secondary_regex = regex_list[1]
+        secondary_match = re.compile(rf"{secondary_regex}")
+        inner_match = True
+    else:
+        inner_match = False
+    for file in os.listdir(directory):
+        file_name = os.path.join(directory, file)
+        with open(file_name) as f:
+            file_lines = f.readlines()
+            file_index = 0
+            while file_index < len(file_lines):
+                matched_main = main_match.match(file_lines[file_index])
+                if matched_main:
+                    match_with_nl = f'{matched_main[0]}\n'
+                    if not match_with_nl in main_things:
+                        main_things.append(match_with_nl)
+                        file_index += 1
+                        if inner_match:
+                            while file_index < len(file_lines) and file_lines[file_index].strip() != '!':
+                                matched_inner = secondary_match.match(file_lines[file_index])
+                                if matched_inner:
+                                    main_things.append(f"{matched_inner[0]}\n")
+                                file_index += 1
+                    else:
+                        file_index += 1
+                else:
+                    file_index += 1
+
+        try:
+            with open(out_file, 'x') as f:
+                print('Creating new file ...')
+        except:
+            pass
+
+        with open(out_file, 'r+') as write_f:
+            current_lines = write_f.readlines()
+            if len(current_lines) > 0:
+                current_file_profiles = group_profiles(current_lines)
+            else:
+                current_file_profiles = []
+            new_file_profiles = group_profiles(main_things)
+            for profile in new_file_profiles:
+                if profile not in current_file_profiles:
+                    for line in profile:
+                        write_f.write(line)
+            
+def group_profiles(main_things):
+    """ Things are part of the same profile if they are indented. """
+
+    profiles = []
+    current_profile = []
+    line = 0
+    while line < len(main_things):
+        current_line = main_things[line]
+        current_profile.append(current_line)
+        if line+1 < len(main_things):
+            line += 1
+            next_line = main_things[line]
+            while ' ' == next_line[0]:
+                current_profile.append(next_line)
+                line += 1
+                if line < len(main_things):
+                    next_line = main_things[line]
+                else:
+                    break
+            profiles.append(current_profile)
+        else:
+            break
+        current_profile = []
+    if current_profile != [] and current_profile not in profiles:
+        profiles.append(current_profile)
+
+    return profiles
+
+def is_show_table(show_index, file_lines):
+    """ Given a starting index of the show command and the file lines, determine whether this is a parseable show table or not. """
+
+    start_index = show_index
+    possible_table = []
+    while "#show" not in file_lines[start_index]:
+        start_index += 1
+    start_index += 1
+    while start_index < len(file_lines):
+        while '\n' == file_lines[start_index]:
+            start_index += 1
+            if start_index == len(file_lines):
+                break
+        possible_table.append(file_lines[start_index])
+        if len(possible_table) == 4 or start_index > show_index+20:
+            break
+        else:
+            start_index += 1
+    if len(possible_table) < 4:
+        return False
+    else:
+        first_us, second_us = possible_table[1], possible_table[3]
+        for letter in first_us.strip():
+            if letter != '-':
+                return False
+        for letter in second_us.strip():
+            if letter != '-' and letter != ' ':
+                return False
+        return True
+
+def group_run_and_table_commands(show_lines):
+    """ Extract the show run and other show sections into separate lists to be processed separatly. """
+    show_indices = []
+    cmd_prompt = get_command_line_prompt(show_lines)
+    for index,line in enumerate(show_lines):
+        if cmd_prompt+'show' in line:
+            show_indices.append(index)
+    
+    show_run_lines = []
+    show_table_lines = []
+
+    line_index = show_indices[0]
+    next_line_index = 0
+    next_show_index = 1
+    for index in show_indices:
+        if next_show_index == len(show_indices):
+            next_line_index = len(show_lines)
+        else:
+            next_line_index = show_indices[next_show_index]
+        if 'show run' in show_lines[index]:
+            while line_index < len(show_lines) and line_index < next_line_index:
+                if show_lines[line_index] != '\n':
+                    show_run_lines.append(show_lines[line_index])
+                line_index += 1
+            next_show_index += 1
+        elif is_show_table(index, show_lines):
+            line_index = index
+            while line_index < len(show_lines) and line_index < next_line_index:
+                if show_lines[line_index] != '\n':
+                    show_table_lines.append(show_lines[line_index])
+                line_index += 1
+            next_show_index += 1
+    return [show_run_lines, show_table_lines]
+
+def get_appliance_name(prompt):
+    """ Returns the appliance name from the provided CLI empty prompt. """
+
+    try:
+        left_paren_index = prompt.index('(') + 1
+        right_paren_index = prompt.index(')')
+        return prompt[left_paren_index:right_paren_index]
+    except:
+        return ''    
 
 special_objects_dict = {'ip access-list session' : process_acl }
