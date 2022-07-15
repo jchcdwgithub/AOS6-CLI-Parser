@@ -80,7 +80,7 @@ if args.directory:
         aos6parser.populate_cli_rules(template_file)
         print('Creating excel files for show running-configs ...')
         for show_run in show_runs:
-            output_file = show_run[-1] + ".xlsx"
+            output_file = show_run[-1] + "_run_config.xlsx"
             print(f'Gathering CLI information from {show_run[-1]}')
             cli_objects = aos6parser.make_cli_objects(show_run[:-1])
             attributes_array = aos6parser.build_attributes_arrays(cli_objects)
