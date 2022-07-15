@@ -37,7 +37,7 @@ Ex. Creating an aggregate file with selective CLI commands:
 
 #### What CLI lines are gathered when using the aggregate flag?
 
-This feature was written with assessments in mind so the information gathered is meant to be included into the assessment report. As such, there are only a few CLI lines that are of interest:
+This feature was written with assessments in mind so the information gathered is meant to be included in the assessment report. As such, there are only a few CLI lines that are of interest:
 
     1. ap group
     2. virtual ap

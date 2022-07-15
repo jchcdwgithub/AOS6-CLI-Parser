@@ -24,7 +24,6 @@ if args.aggregate:
         ['^wlan ssid-profile .+', '^ +opmode .+'],
         ['^aaa profile .+', '^ +dot1x-server-group .+'],
         ['^wlan ht-ssid-profile .+'],
-        ['^ap-group .+'],
         ['^ntp server .+'],
         ['^mgmt-user .+'],
         ['^snmp-server community .+'],
@@ -50,6 +49,7 @@ if args.directory:
     for file in os.listdir(directory):
         file_name = os.path.join(directory,file)
         with open(file_name) as config_f:
+            print(f"Gathering information on {file_name}...")
             config_lines = config_f.readlines()
             empty_prompt = aos6parser.get_command_line_prompt(config_lines)
             if empty_prompt != '':
@@ -73,17 +73,20 @@ if args.directory:
             else:
                 aggregated_tables[show_command] = [show_table[show_command]]
 
+    print('Creating excel file for show tables ...')
     aos6parser.new_write_show_tables_to_excel_worksheets(aggregated_tables)
 
     if len(show_runs) > 0:
         aos6parser.populate_cli_rules(template_file)
-
+        print('Creating excel files for show running-configs ...')
         for show_run in show_runs:
             output_file = show_run[-1] + ".xlsx"
+            print(f'Gathering CLI information from {show_run[-1]}')
             cli_objects = aos6parser.make_cli_objects(show_run[:-1])
             attributes_array = aos6parser.build_attributes_arrays(cli_objects)
             tables_arrays = aos6parser.build_tables_arrays(attributes_array)
             aos6parser.write_tables_to_excel_worksheets(tables_arrays,output_file)
+            print(f'Excel file {output_file} created.')
 
 else:
     if not args.input:
@@ -101,14 +104,18 @@ else:
         config_lines = config_file.readlines()
         empty_prompt = aos6parser.get_command_line_prompt(config_lines)
         appliance_name = aos6parser.get_appliance_name(empty_prompt)
+        print('Extracting show information ...')
         show_run,show_table = aos6parser.group_run_and_table_commands(config_lines)
         if len(show_table) > 0:
             show_output = output_file + '_show.xlsx'
             show_tables = aos6parser.new_group_show_information_into_tables(show_table)
+            print(f"Writing show tables to excel file {show_output}")
             aos6parser.write_show_tables_to_excel_worksheets(show_tables,output_file=show_output)
         if len(show_run) > 0:
             run_output = output_file + '_run.xlsx'
+            print('Extracting CLI information from show running-config')
             cli_objects = aos6parser.make_cli_objects(show_run)
             attributes_array = aos6parser.build_attributes_arrays(cli_objects)
             tables_arrays = aos6parser.build_tables_arrays(attributes_array)
+            print(f"Writing show running-config information to excel file {run_output}")
             aos6parser.write_tables_to_excel_worksheets(tables_arrays,run_output)
