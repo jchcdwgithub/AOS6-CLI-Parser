@@ -4,7 +4,7 @@ This is a command line tool that takes one or more AOS6 configuration files, cre
 
 ## Files that the script can process
 
-What information can be inside the files?
+### What information can be inside the files?
 
 Any CLI output from an AOS6 system can be placed inside the file(s) you want the script to process. Only two types of CLI commands will be processed:
     1. show run
@@ -12,11 +12,11 @@ Any CLI output from an AOS6 system can be placed inside the file(s) you want the
 
 Any show command that doesn't fall into the categories mentioned above will be ignored.
 
-Do I have to separate the show run and other show commands?
+### Do I have to separate the show run and other show commands?
 
 No. In fact it's more efficient if you place all the CLI output you gather into one file. The script will separate the table outputs and the show run output automatically and place them into separate files.
 
-### Usage
+## Usage
 
 There are a few flags that you can supply to the script:
 
@@ -35,7 +35,7 @@ Ex. Processing a directory of configuration files:
 Ex. Creating an aggregate file with selective CLI commands:
     python a6p.py -d path/to/directory -a
 
-#### What CLI lines are gathered when using the aggregate flag?
+## What CLI lines are gathered when using the aggregate flag?
 
 This feature was written with assessments in mind so the information gathered is meant to be included in the assessment report. As such, there are only a few CLI lines that are of interest:
 
