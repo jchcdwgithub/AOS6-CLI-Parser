@@ -724,6 +724,7 @@ def new_write_show_tables_to_excel_worksheets(tables_arrays, output_file='show_o
             new_add_table_to_worksheet(table[:-1], current_worksheet, appliance_name=appliance_name, table_name=table_name, start=start)
             start += table_row_len + 1
     workbook.save(output_file)
+    print(f"Excel file {output_file} created.")
 
 def add_node_column_to_table(table):
     ''' Adds a node column to the table. '''
@@ -1243,22 +1244,20 @@ def format_names(cli_line):
             index += 1
     return replaced_cli_line
 
-def make_cli_objects(cli_file):
-    ''' Parses the cli_file and returns a dictionary of key to value entries based on the cli outputs. '''
+def make_cli_objects(cli_lines):
+    ''' Parses the cli_lines and returns a dictionary of key to value entries based on the cli outputs. '''
 
-    with open(cli_file) as f:
-        lines = f.readlines()
-        cli_groups = group_cli_lines(lines)
-        cli_objects = {}
-        for cli_group in cli_groups:
-            if len(cli_group) > 0:
-                header, current_object = make_object_from_cli_group(cli_group)
-                if header in cli_objects:
-                    cli_objects[header].append(current_object)
-                else:
-                    if current_object != {}:
-                        cli_objects[header] = [current_object]
-        return cli_objects
+    cli_groups = group_cli_lines(cli_lines)
+    cli_objects = {}
+    for cli_group in cli_groups:
+        if len(cli_group) > 0:
+            header, current_object = make_object_from_cli_group(cli_group)
+            if header in cli_objects:
+                cli_objects[header].append(current_object)
+            else:
+                if current_object != {}:
+                    cli_objects[header] = [current_object]
+    return cli_objects
 
 def get_table_range(worksheet, start_column_index):
     ''' Return a range of cells representing a table. Returns the table and the next cell to start the search. '''
