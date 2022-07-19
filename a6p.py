@@ -4,7 +4,7 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-i','--input',help='Path to the CLI file')
-parser.add_argument('-o','--output',help='Path and filename for the excel file.')
+parser.add_argument('-o','--output',help='Path and filename for the excel file or a directory name for storing mulitple output files.')
 parser.add_argument('-t','--template',help='File that has the template cli commands.')
 parser.add_argument('-a', '--aggregate',help="Process a directory of show run files and aggregate all information into an output file. Must use with -d or --directory option.",action=argparse.BooleanOptionalAction)
 parser.add_argument('-d', '--directory',help="Path to a directory with files you'd like to process.")
@@ -74,13 +74,15 @@ if args.directory:
                 aggregated_tables[show_command] = [show_table[show_command]]
 
     print('Creating excel file for show tables ...')
-    aos6parser.new_write_show_tables_to_excel_worksheets(aggregated_tables)
+    full_output_file = os.path.join(directory,output_file)
+    aos6parser.new_write_show_tables_to_excel_worksheets(aggregated_tables,output_file=full_output_file)
 
     if len(show_runs) > 0:
         aos6parser.populate_cli_rules(template_file)
         print('Creating excel files for show running-configs ...')
         for show_run in show_runs:
             output_file = show_run[-1] + "_run_config.xlsx"
+            full_output_file = os.path.join(directory,output_file)
             print(f'Gathering CLI information from {show_run[-1]}')
             cli_objects = aos6parser.make_cli_objects(show_run[:-1])
             attributes_array = aos6parser.build_attributes_arrays(cli_objects)
