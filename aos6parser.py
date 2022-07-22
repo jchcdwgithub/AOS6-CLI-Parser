@@ -724,7 +724,6 @@ def new_write_show_tables_to_excel_worksheets(tables_arrays, output_file='show_o
             new_add_table_to_worksheet(table[:-1], current_worksheet, appliance_name=appliance_name, table_name=table_name, start=start)
             start += table_row_len + 1
     workbook.save(output_file)
-    print(f"Excel file {output_file} created.")
 
 def add_node_column_to_table(table):
     ''' Adds a node column to the table. '''

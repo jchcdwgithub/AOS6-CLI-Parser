@@ -74,6 +74,10 @@ if args.directory:
                 aggregated_tables[show_command] = [show_table[show_command]]
 
     print('Creating excel file for show tables ...')
+    if args.output:
+        output_file = args.output
+    else:
+        output_file = 'show_files.xlsx'
     full_output_file = os.path.join(directory,output_file)
     aos6parser.new_write_show_tables_to_excel_worksheets(aggregated_tables,output_file=full_output_file)
 
@@ -87,7 +91,7 @@ if args.directory:
             cli_objects = aos6parser.make_cli_objects(show_run[:-1])
             attributes_array = aos6parser.build_attributes_arrays(cli_objects)
             tables_arrays = aos6parser.build_tables_arrays(attributes_array)
-            aos6parser.write_tables_to_excel_worksheets(tables_arrays,output_file)
+            aos6parser.write_tables_to_excel_worksheets(tables_arrays,full_output_file)
             print(f'Excel file {output_file} created.')
 
 else:
