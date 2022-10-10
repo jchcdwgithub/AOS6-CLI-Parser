@@ -1,4 +1,3 @@
-from turtle import left
 from docx import Document
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.table import Table

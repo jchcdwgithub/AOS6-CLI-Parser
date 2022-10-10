@@ -110,6 +110,7 @@ else:
         config_lines = config_file.readlines()
         empty_prompt = aos6parser.get_command_line_prompt(config_lines)
         appliance_name = aos6parser.get_appliance_name(empty_prompt)
+        aos6parser.populate_cli_rules(template_file)
         print('Extracting show information ...')
         show_run,show_table = aos6parser.group_run_and_table_commands(config_lines)
         if len(show_table) > 0:
