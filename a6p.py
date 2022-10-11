@@ -42,6 +42,8 @@ if args.aggregate:
     for regex in regex_list:
         aos6parser.grab_specific_lines_from_files(directory,output_file,regex)
 
+aos6parser.populate_cli_rules(template_file)
+
 if args.directory:
     directory = args.directory
     show_runs = []
@@ -82,7 +84,6 @@ if args.directory:
     aos6parser.new_write_show_tables_to_excel_worksheets(aggregated_tables,output_file=full_output_file)
 
     if len(show_runs) > 0:
-        aos6parser.populate_cli_rules(template_file)
         print('Creating excel files for show running-configs ...')
         for show_run in show_runs:
             output_file = show_run[-1] + "_run_config.xlsx"
@@ -110,7 +111,6 @@ else:
         config_lines = config_file.readlines()
         empty_prompt = aos6parser.get_command_line_prompt(config_lines)
         appliance_name = aos6parser.get_appliance_name(empty_prompt)
-        aos6parser.populate_cli_rules(template_file)
         print('Extracting show information ...')
         show_run,show_table = aos6parser.group_run_and_table_commands(config_lines)
         if len(show_table) > 0:
