@@ -1604,9 +1604,10 @@ def get_command_line_prompt(log_lines):
     """ Returns the command line prompt string. Used to match command line strings later that might appear in a table. """
 
     for line in log_lines:
-        if '#show' in line.replace(' ','') and '(' == line[0]:
+        if '#show' in line.replace(' ','') and '(' in line and ')' in line:
             show_index = line.index('#')
-            empty_line = line[:show_index+1]
+            start_host_index = line.index('(')
+            empty_line = line[start_host_index:show_index+1]
             return empty_line
     return ''
 
@@ -1708,7 +1709,7 @@ def is_show_table(show_index, file_lines):
             if start_index == len(file_lines):
                 break
         possible_table.append(file_lines[start_index])
-        if len(possible_table) == 4 or start_index > show_index+20:
+        if len(possible_table) == 4:
             break
         else:
             start_index += 1
@@ -1729,7 +1730,7 @@ def group_run_and_table_commands(show_lines):
     show_indices = []
     cmd_prompt = get_command_line_prompt(show_lines)
     for index,line in enumerate(show_lines):
-        if cmd_prompt+'show' in line:
+        if cmd_prompt+'show' in line or cmd_prompt+' show' in line:
             show_indices.append(index)
     
     show_run_lines = []
@@ -1744,7 +1745,7 @@ def group_run_and_table_commands(show_lines):
         else:
             next_line_index = show_indices[next_show_index]
         if 'show run' in show_lines[index]:
-            while line_index < len(show_lines) and line_index < next_line_index:
+            while line_index < len(show_lines) and line_index < next_line_index :
                 if show_lines[line_index] != '\n':
                     show_run_lines.append(show_lines[line_index])
                 line_index += 1
@@ -1755,6 +1756,8 @@ def group_run_and_table_commands(show_lines):
                 if show_lines[line_index] != '\n':
                     show_table_lines.append(show_lines[line_index])
                 line_index += 1
+            next_show_index += 1
+        else:
             next_show_index += 1
     return [show_run_lines, show_table_lines]
 

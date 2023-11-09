@@ -107,7 +107,7 @@ else:
             output_file = args.output
     else:
         output_file = 'parsed_file'
-    with open(input_file) as config_file:
+    with open(input_file, encoding='utf-8') as config_file:
         config_lines = config_file.readlines()
         empty_prompt = aos6parser.get_command_line_prompt(config_lines)
         appliance_name = aos6parser.get_appliance_name(empty_prompt)
